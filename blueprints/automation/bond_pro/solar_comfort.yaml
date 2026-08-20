@@ -1,0 +1,100 @@
+blueprint:
+  name: "Bond Pro: Solar-aware comfort"
+  description: >-
+    Run ceiling fans harder while your solar production exceeds a threshold
+    (spare energy is free cooling) and drop them back when production falls.
+  domain: automation
+  source_url: https://github.com/trooperthorn/ha_int_bond/blob/main/blueprints/automation/bond_pro/solar_comfort.yaml
+  input:
+    solar_power:
+      name: Solar production sensor
+      description: Sensor reporting current production or grid export in watts.
+      selector:
+        entity:
+          domain: sensor
+          device_class: power
+    surplus_threshold:
+      name: Surplus threshold (W)
+      description: Above this production, boost the fans.
+      default: 1500
+      selector:
+        number:
+          min: 100
+          max: 10000
+          step: 100
+          unit_of_measurement: W
+    fans:
+      name: Fans
+      description: Bond fans to control.
+      selector:
+        entity:
+          domain: fan
+          multiple: true
+    boost_percentage:
+      name: Boost speed
+      description: Fan speed while surplus power is available.
+      default: 100
+      selector:
+        number:
+          min: 10
+          max: 100
+          step: 10
+          unit_of_measurement: "%"
+    normal_percentage:
+      name: Normal speed
+      description: Fan speed when surplus ends (0 turns the fans off).
+      default: 33
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+    sustain_minutes:
+      name: Sustain time
+      description: Production must stay above/below the threshold this long.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input solar_power
+    above: !input surplus_threshold
+    for:
+      minutes: !input sustain_minutes
+    id: surplus
+  - trigger: numeric_state
+    entity_id: !input solar_power
+    below: !input surplus_threshold
+    for:
+      minutes: !input sustain_minutes
+    id: deficit
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: surplus
+        sequence:
+          - action: fan.set_percentage
+            target:
+              entity_id: !input fans
+            data:
+              percentage: !input boost_percentage
+      - conditions:
+          - condition: trigger
+            id: deficit
+        sequence:
+          - action: fan.set_percentage
+            target:
+              entity_id: !input fans
+            data:
+              percentage: !input normal_percentage
+
+mode: restart

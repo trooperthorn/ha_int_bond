@@ -1,0 +1,102 @@
+blueprint:
+  name: "Bond Pro: Storm guard"
+  description: >-
+    When your weather integration reports rain or high wind, turn off selected
+    Bond fans, optionally close Bond covers, and notify you to close windows
+    and doors.
+  domain: automation
+  source_url: https://github.com/trooperthorn/ha_int_bond/blob/main/blueprints/automation/bond_pro/storm_guard.yaml
+  input:
+    weather_entity:
+      name: Weather entity
+      description: The weather entity to watch (e.g. weather.home).
+      selector:
+        entity:
+          domain: weather
+    storm_conditions:
+      name: Storm conditions
+      description: Weather states that count as a storm.
+      default:
+        - rainy
+        - pouring
+        - lightning
+        - lightning-rainy
+        - hail
+      selector:
+        select:
+          multiple: true
+          options:
+            - rainy
+            - pouring
+            - lightning
+            - lightning-rainy
+            - hail
+            - snowy-rainy
+            - windy
+            - windy-variant
+    fans:
+      name: Fans to pause
+      description: Bond fans to turn off when the storm hits.
+      default: []
+      selector:
+        entity:
+          domain: fan
+          multiple: true
+    covers:
+      name: Covers to close
+      description: Bond covers (shades/awnings) to close when the storm hits.
+      default: []
+      selector:
+        entity:
+          domain: cover
+          multiple: true
+    notify_device:
+      name: Notify device
+      description: Device running the Home Assistant app to notify.
+      default: null
+      selector:
+        device:
+          integration: mobile_app
+          multiple: false
+
+triggers:
+  - trigger: state
+    entity_id: !input weather_entity
+    to: !input storm_conditions
+
+conditions: []
+
+actions:
+  - if:
+      - condition: template
+        value_template: "{{ fans | count > 0 }}"
+    then:
+      - action: fan.turn_off
+        target:
+          entity_id: !input fans
+  - if:
+      - condition: template
+        value_template: "{{ covers | count > 0 }}"
+    then:
+      - action: cover.close_cover
+        target:
+          entity_id: !input covers
+  - if:
+      - condition: template
+        value_template: "{{ notify_device is not none }}"
+    then:
+      - domain: mobile_app
+        type: notify
+        device_id: !input notify_device
+        title: "Storm approaching"
+        message: >-
+          {{ states('sensor.time') }} - {{ trigger.to_state.state }} reported.
+          Fans paused; close windows and doors.
+
+variables:
+  fans: !input fans
+  covers: !input covers
+  notify_device: !input notify_device
+
+mode: single
+max_exceeded: silent

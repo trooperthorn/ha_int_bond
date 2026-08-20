@@ -1,0 +1,72 @@
+set_fan_speed_tracked_state:
+  target:
+    entity:
+      integration: bond_pro
+      domain: fan
+  fields:
+    speed:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+
+set_switch_power_tracked_state:
+  target:
+    entity:
+      integration: bond_pro
+      domain: switch
+  fields:
+    power_state:
+      required: true
+      selector:
+        boolean:
+
+set_light_power_tracked_state:
+  target:
+    entity:
+      integration: bond_pro
+      domain: light
+  fields:
+    power_state:
+      required: true
+      selector:
+        boolean:
+
+set_light_brightness_tracked_state:
+  target:
+    entity:
+      integration: bond_pro
+      domain: light
+  fields:
+    brightness:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+
+rf_scan:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: bond_pro
+
+transmit_command:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: bond_pro
+    device_id:
+      required: true
+      selector:
+        text:
+    command_id:
+      required: true
+      selector:
+        text:

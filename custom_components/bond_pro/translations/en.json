@@ -1,0 +1,166 @@
+{
+  "config": {
+    "flow_title": "{name} ({host})",
+    "step": {
+      "user": {
+        "description": "Set up your Bond hub. The local token is shown in the Bond app under your bridge's settings, or fetched automatically within 10 minutes of power-cycling the bridge.",
+        "data": {
+          "host": "Host",
+          "access_token": "Access token"
+        }
+      },
+      "confirm": {
+        "description": "Do you want to set up {name} ({host})?",
+        "data": {
+          "access_token": "Access token"
+        }
+      },
+      "reauth_confirm": {
+        "description": "The token for the Bond hub at {host} is no longer valid. Enter the current local token to reconnect.",
+        "data": {
+          "access_token": "Access token"
+        }
+      },
+      "reconfigure": {
+        "description": "Update the connection settings for this Bond hub.",
+        "data": {
+          "host": "Host",
+          "access_token": "Access token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "old_firmware": "Old firmware on the Bond device - please upgrade it before continuing",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Re-configuration was successful",
+      "wrong_device": "The device at this host is a different Bond hub"
+    }
+  },
+  "entity": {
+    "button": {
+      "stop_actions": { "name": "Stop actions" },
+      "toggle_power": { "name": "Toggle power" },
+      "toggle_light": { "name": "Toggle light" },
+      "increase_brightness": { "name": "Increase brightness" },
+      "decrease_brightness": { "name": "Decrease brightness" },
+      "toggle_up_light": { "name": "Toggle up light" },
+      "toggle_down_light": { "name": "Toggle down light" },
+      "start_dimmer": { "name": "Start dimmer" },
+      "toggle_light_temp": { "name": "Toggle light temperature" },
+      "start_up_light_dimmer": { "name": "Start up light dimmer" },
+      "start_down_light_dimmer": { "name": "Start down light dimmer" },
+      "start_increasing_brightness": { "name": "Start increasing brightness" },
+      "start_decreasing_brightness": { "name": "Start decreasing brightness" },
+      "increase_up_light_brightness": { "name": "Increase up light brightness" },
+      "decrease_up_light_brightness": { "name": "Decrease up light brightness" },
+      "increase_down_light_brightness": { "name": "Increase down light brightness" },
+      "decrease_down_light_brightness": { "name": "Decrease down light brightness" },
+      "cycle_up_light_brightness": { "name": "Cycle up light brightness" },
+      "cycle_down_light_brightness": { "name": "Cycle down light brightness" },
+      "cycle_brightness": { "name": "Cycle brightness" },
+      "increase_speed": { "name": "Increase speed" },
+      "decrease_speed": { "name": "Decrease speed" },
+      "toggle_direction": { "name": "Toggle direction" },
+      "increase_temperature": { "name": "Increase temperature" },
+      "decrease_temperature": { "name": "Decrease temperature" },
+      "increase_flame": { "name": "Increase flame" },
+      "decrease_flame": { "name": "Decrease flame" },
+      "toggle_open": { "name": "Toggle open" },
+      "increase_position": { "name": "Increase position" },
+      "decrease_position": { "name": "Decrease position" },
+      "open_next": { "name": "Open next" },
+      "close_next": { "name": "Close next" },
+      "preset": { "name": "Preset" }
+    },
+    "light": {
+      "up_light": { "name": "Up light" },
+      "down_light": { "name": "Down light" },
+      "light": { "name": "Light" },
+      "blue_light": { "name": "Blue light" }
+    },
+    "number": {
+      "flame": { "name": "Flame" }
+    },
+    "sensor": {
+      "wifi_rssi": { "name": "Wi-Fi signal" },
+      "last_restart": { "name": "Last restart" },
+      "rf_frequency": { "name": "RF frequency" }
+    }
+  },
+  "services": {
+    "set_fan_speed_tracked_state": {
+      "name": "Set fan speed tracked state",
+      "description": "Sets the tracked fan speed for a bond fan without transmitting.",
+      "fields": {
+        "speed": {
+          "name": "Speed",
+          "description": "Fan speed as percentage."
+        }
+      }
+    },
+    "set_switch_power_tracked_state": {
+      "name": "Set switch power tracked state",
+      "description": "Sets the tracked power state of a bond switch without transmitting.",
+      "fields": {
+        "power_state": {
+          "name": "Power state",
+          "description": "Whether the switch should be tracked as on."
+        }
+      }
+    },
+    "set_light_power_tracked_state": {
+      "name": "Set light power tracked state",
+      "description": "Sets the tracked power state of a bond light without transmitting.",
+      "fields": {
+        "power_state": {
+          "name": "Power state",
+          "description": "Whether the light should be tracked as on."
+        }
+      }
+    },
+    "set_light_brightness_tracked_state": {
+      "name": "Set light brightness tracked state",
+      "description": "Sets the tracked brightness state of a bond light without transmitting.",
+      "fields": {
+        "brightness": {
+          "name": "Brightness",
+          "description": "Brightness from 0..255."
+        }
+      }
+    },
+    "rf_scan": {
+      "name": "RF noise scan",
+      "description": "Scans the bridge's RF bands and returns signal strength per frequency.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Hub",
+          "description": "Config entry of the Bond hub to scan with (optional if only one hub)."
+        }
+      }
+    },
+    "transmit_command": {
+      "name": "Transmit command",
+      "description": "Transmits a stored device command's raw RF signal, bypassing state tracking.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Hub",
+          "description": "Config entry of the Bond hub (optional if only one hub)."
+        },
+        "device_id": {
+          "name": "Bond device ID",
+          "description": "The Bond device the command belongs to."
+        },
+        "command_id": {
+          "name": "Command ID",
+          "description": "The stored command to transmit."
+        }
+      }
+    }
+  }
+}

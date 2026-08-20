@@ -1,0 +1,78 @@
+blueprint:
+  name: "Bond Pro: Seasonal fan direction"
+  description: >-
+    Flip ceiling fan direction with the season: forward (downdraft) in summer
+    for cooling, reverse (updraft) in winter to push warm air down. Requires
+    the Season integration and fans whose Bond template supports SetDirection.
+  domain: automation
+  source_url: https://github.com/trooperthorn/ha_int_bond/blob/main/blueprints/automation/bond_pro/seasonal_direction.yaml
+  input:
+    season_entity:
+      name: Season sensor
+      description: The season sensor (from the Season integration).
+      default: sensor.season
+      selector:
+        entity:
+          domain: sensor
+    fans:
+      name: Fans
+      description: Bond fans that support direction control.
+      selector:
+        entity:
+          domain: fan
+          multiple: true
+    summer_direction:
+      name: Summer direction
+      default: forward
+      selector:
+        select:
+          options:
+            - forward
+            - reverse
+    winter_direction:
+      name: Winter direction
+      default: reverse
+      selector:
+        select:
+          options:
+            - forward
+            - reverse
+
+triggers:
+  - trigger: state
+    entity_id: !input season_entity
+    to:
+      - spring
+      - summer
+    id: warm
+  - trigger: state
+    entity_id: !input season_entity
+    to:
+      - autumn
+      - winter
+    id: cold
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: warm
+        sequence:
+          - action: fan.set_direction
+            target:
+              entity_id: !input fans
+            data:
+              direction: !input summer_direction
+      - conditions:
+          - condition: trigger
+            id: cold
+        sequence:
+          - action: fan.set_direction
+            target:
+              entity_id: !input fans
+            data:
+              direction: !input winter_direction
+
+mode: single
