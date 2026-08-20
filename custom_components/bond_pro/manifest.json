@@ -20,7 +20,7 @@
   "issue_tracker": "https://github.com/trooperthorn/ha_int_bond/issues",
   "loggers": ["bond_async"],
   "requirements": [
-    "bond-async @ git+https://github.com/trooperthorn/bond-async.git@pro"
+    "bond-async@git+https://github.com/trooperthorn/bond-async.git@pro"
   ],
   "version": "0.1.0",
   "zeroconf": ["_bond._tcp.local."]
