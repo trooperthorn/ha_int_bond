@@ -7,7 +7,7 @@ import math
 from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
-from bond_async import Action, DeviceType, Direction
+from .bond_async_pro import Action, DeviceType, Direction
 import voluptuous as vol
 
 from homeassistant.components.fan import (

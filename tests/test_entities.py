@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
-from bond_async import Action
+from custom_components.bond_pro.bond_async_pro import Action
 
 from homeassistant.components.fan import (
     ATTR_PERCENTAGE,
@@ -79,7 +79,7 @@ async def test_fan_actions(hass: HomeAssistant) -> None:
     """Fan services translate into Bond actions."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             FAN_DOMAIN,
             SERVICE_TURN_ON,
@@ -90,7 +90,7 @@ async def test_fan_actions(hass: HomeAssistant) -> None:
     assert action.call_args[0][0] == FAN_ID
     assert action.call_args[0][1] == Action.turn_on()
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             FAN_DOMAIN,
             SERVICE_SET_PERCENTAGE,
@@ -125,7 +125,7 @@ async def test_light_actions(hass: HomeAssistant) -> None:
     """Light on/off translate into Bond light actions."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             "light",
             SERVICE_TURN_ON,
@@ -134,7 +134,7 @@ async def test_light_actions(hass: HomeAssistant) -> None:
         )
     assert action.call_args[0][1] == Action.turn_light_on()
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             "light",
             SERVICE_TURN_OFF,
@@ -156,7 +156,7 @@ async def test_blue_light(hass: HomeAssistant) -> None:
     with (
         patch_bond_api(),
         patch(
-            "bond_async.Bond.set_bluelight_brightness", AsyncMock()
+            "custom_components.bond_pro.bond_async_pro.Bond.set_bluelight_brightness", AsyncMock()
         ) as set_bluelight,
     ):
         await hass.services.async_call(
@@ -196,7 +196,7 @@ async def test_flame_number(hass: HomeAssistant) -> None:
     """The flame number sets flame via SetFlame and off at zero."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             "number",
             "set_value",
@@ -206,7 +206,7 @@ async def test_flame_number(hass: HomeAssistant) -> None:
     assert action.call_args[0][0] == FIREPLACE_ID
     assert action.call_args[0][1] == Action.set_flame(55)
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             "number",
             "set_value",

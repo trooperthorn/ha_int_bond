@@ -44,7 +44,7 @@ Runs alongside or instead of the core `bond` integration under its own domain, `
 The local token is in the Bond app under your bridge → Settings → *Local API*, or is fetched automatically if the bridge was power-cycled in the last 10 minutes (the config flow tries this first).
 
 ### Manual
-Copy `custom_components/bond_pro` into your `config/custom_components/` and install the library: `pip install "bond-async @ git+https://github.com/trooperthorn/bond-async.git@pro"`.
+Copy `custom_components/bond_pro` into your `config/custom_components/`. No pip requirements: the forked `bond-async` library is vendored inside the component as `bond_async_pro` (the Home Assistant container ships upstream `bond-async==0.2.1` for the core integration, which would otherwise shadow the fork and break setup with `'Bond' object has no attribute 'wifi_sta'`). The fork's source of truth is [trooperthorn/bond-async@pro](https://github.com/trooperthorn/bond-async/tree/pro); re-vendor by copying its `bond_async/` package over `custom_components/bond_pro/bond_async_pro/`.
 
 ## Blueprints
 

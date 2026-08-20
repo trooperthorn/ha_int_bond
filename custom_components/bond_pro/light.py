@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
-from bond_async import Action, DeviceType
+from .bond_async_pro import Action, DeviceType
 import voluptuous as vol
 
 from homeassistant.components.light import (

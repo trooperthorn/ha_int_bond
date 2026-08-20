@@ -133,7 +133,7 @@ def patch_bond_api(
     version: dict[str, Any] | None = None,
     version_side_effect: Exception | None = None,
 ):
-    """Patch every bond_async.Bond method the integration calls."""
+    """Patch every vendored Bond method the integration calls."""
     if devices is None:
         devices = DEVICES
     if version is None:
@@ -164,16 +164,16 @@ def patch_bond_api(
             "custom_components.bond_pro.config_flow.async_get_clientsession",
             return_value=MagicMock(),
         ),
-        patch("bond_async.Bond.version", version_mock),
-        patch("bond_async.Bond.devices", AsyncMock(return_value=list(devices))),
-        patch("bond_async.Bond.device", autospec=True, side_effect=_device),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.version", version_mock),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.devices", AsyncMock(return_value=list(devices))),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.device", autospec=True, side_effect=_device),
         patch(
-            "bond_async.Bond.device_properties", autospec=True, side_effect=_props
+            "custom_components.bond_pro.bond_async_pro.Bond.device_properties", autospec=True, side_effect=_props
         ),
-        patch("bond_async.Bond.device_state", autospec=True, side_effect=_state),
-        patch("bond_async.Bond.bridge", AsyncMock(return_value=dict(BRIDGE))),
-        patch("bond_async.Bond.wifi_sta", AsyncMock(return_value=dict(WIFI_STA))),
-        patch("bond_async.Bond.action", AsyncMock()) as action_mock,
+        patch("custom_components.bond_pro.bond_async_pro.Bond.device_state", autospec=True, side_effect=_state),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.bridge", AsyncMock(return_value=dict(BRIDGE))),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.wifi_sta", AsyncMock(return_value=dict(WIFI_STA))),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action_mock,
     ):
         yield action_mock
 

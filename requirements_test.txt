@@ -1,3 +1,2 @@
 pytest-homeassistant-custom-component==0.13.205
-bond-async@git+https://github.com/trooperthorn/bond-async.git@pro
 aioresponses>=0.7.6

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bond_async import Action, DeviceType
+from .bond_async_pro import Action, DeviceType
 
 from homeassistant.components.cover import (
     ATTR_POSITION,

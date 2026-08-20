@@ -20,7 +20,7 @@ async def test_rf_scan_service(hass: HomeAssistant) -> None:
     """rf_scan returns the bridge's noise scan as response data."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.signal_rssi", AsyncMock(return_value=RF_SCAN)):
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.signal_rssi", AsyncMock(return_value=RF_SCAN)):
         response = await hass.services.async_call(
             DOMAIN,
             "rf_scan",
@@ -41,7 +41,7 @@ async def test_transmit_command_service(hass: HomeAssistant) -> None:
     """transmit_command validates the device and transmits."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.transmit_command", AsyncMock()) as transmit:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.transmit_command", AsyncMock()) as transmit:
         await hass.services.async_call(
             DOMAIN,
             "transmit_command",
@@ -56,7 +56,7 @@ async def test_transmit_command_unknown_device(hass: HomeAssistant) -> None:
     await setup_bond(hass)
 
     with (
-        patch("bond_async.Bond.transmit_command", AsyncMock()) as transmit,
+        patch("custom_components.bond_pro.bond_async_pro.Bond.transmit_command", AsyncMock()) as transmit,
         pytest.raises(HomeAssistantError),
     ):
         await hass.services.async_call(
@@ -72,7 +72,7 @@ async def test_fan_speed_tracked_state(hass: HomeAssistant) -> None:
     """The tracked-state entity service patches state belief."""
     await setup_bond(hass)
 
-    with patch("bond_async.Bond.action", AsyncMock()) as action:
+    with patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action:
         await hass.services.async_call(
             DOMAIN,
             "set_fan_speed_tracked_state",

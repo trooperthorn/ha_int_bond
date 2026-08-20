@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientConnectionError, ClientResponseError
-from bond_async import Bond, RequestorUUID
+from .bond_async_pro import Bond, RequestorUUID
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntryState, ConfigFlow, ConfigFlowResult

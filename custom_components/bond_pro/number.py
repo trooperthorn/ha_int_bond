@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bond_async import Action, DeviceType
+from .bond_async_pro import Action, DeviceType
 
 from homeassistant.components.number import NumberEntity
 from homeassistant.const import PERCENTAGE

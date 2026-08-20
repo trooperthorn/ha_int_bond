@@ -1,7 +1,9 @@
 {
   "domain": "bond_pro",
   "name": "Bond Pro",
-  "codeowners": ["@trooperthorn"],
+  "codeowners": [
+    "@trooperthorn"
+  ],
   "config_flow": true,
   "dependencies": [],
   "dhcp": [
@@ -18,10 +20,12 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/trooperthorn/ha_int_bond/issues",
-  "loggers": ["bond_async"],
-  "requirements": [
-    "bond-async@git+https://github.com/trooperthorn/bond-async.git@pro"
+  "loggers": [
+    "custom_components.bond_pro.bond_async_pro"
   ],
-  "version": "0.1.0",
-  "zeroconf": ["_bond._tcp.local."]
+  "requirements": [],
+  "version": "0.1.1",
+  "zeroconf": [
+    "_bond._tcp.local."
+  ]
 }

@@ -16,7 +16,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientError
-from bond_async import Bond, BPUPSubscriptions
+from .bond_async_pro import Bond, BPUPSubscriptions
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
