@@ -26,9 +26,11 @@ jobs:
       - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main on 2026-09-03
         with:
           category: integration
-          # HACS reads license metadata from the default branch, so feature
-          # branches skip that one check; main validates it.
-          ignore: ${{ github.ref != 'refs/heads/main' && 'license' || '' }}
+          # This repository ships no brand assets and is not listed in the
+          # home-assistant/brands repository, so that check never passes.
+          # HACS also reads license metadata from the default branch, so
+          # feature branches skip that one check; main validates it.
+          ignore: ${{ github.ref != 'refs/heads/main' && 'brands,license' || 'brands' }}
 
   hassfest:
     name: hassfest (manifest sanity)
