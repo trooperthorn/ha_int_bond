@@ -8,7 +8,6 @@ from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
 from .bond_async_pro import Action, DeviceType, Direction
-import voluptuous as vol
 
 from homeassistant.components.fan import (
     DIRECTION_FORWARD,
@@ -18,7 +17,6 @@ from homeassistant.components.fan import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.percentage import (
     percentage_to_ranged_value,
@@ -37,8 +35,6 @@ PARALLEL_UPDATES = 0
 
 PRESET_MODE_BREEZE = "Breeze"
 
-SERVICE_SET_FAN_SPEED_TRACKED_STATE = "set_fan_speed_tracked_state"
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -47,13 +43,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up Bond fan devices."""
     data = entry.runtime_data
-
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        SERVICE_SET_FAN_SPEED_TRACKED_STATE,
-        {vol.Required("speed"): vol.All(vol.Coerce(int), vol.Range(0, 100))},
-        "async_set_speed_belief",
-    )
 
     async_add_entities(
         BondFan(data, device)

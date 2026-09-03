@@ -33,13 +33,15 @@ def hub_device_info(hub: BondHub) -> DeviceInfo:
     )
 
 
-def bond_device_info(hub: BondHub, device: BondDevice) -> DeviceInfo:
+def bond_device_info(
+    hub: BondHub, device: BondDevice, hub_device_id: str
+) -> DeviceInfo:
     """Build the device registry entry for a device behind the hub."""
     device_info = DeviceInfo(
         identifiers={(DOMAIN, f"{hub.bond_id}_{device.device_id}")},
         manufacturer=hub.make,
         name=device.name,
-        via_device=(DOMAIN, hub.bond_id or hub.host),
+        via_device_id=hub_device_id,
         configuration_url=f"http://{hub.host}",
     )
     if device.location is not None:
@@ -100,7 +102,7 @@ class BondEntity(CoordinatorEntity[BondFallbackCoordinator]):
             # Main entity of the device: carries the device name.
             self._attr_name = None
         self._attr_assumed_state = hub.is_bridge and not device.trust_state
-        self._attr_device_info = bond_device_info(hub, device)
+        self._attr_device_info = bond_device_info(hub, device, data.hub_device_id)
         self._attr_available = True
         self._apply_state()
 

@@ -62,9 +62,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: BondConfigEntry) -> bool
         await hub.setup()
     except ClientResponseError as ex:
         if ex.status == HTTPStatus.UNAUTHORIZED:
-            # Trigger the reauth flow instead of silently failing (the
-            # upstream integration returned False here, leaving the entry
-            # dead until the user removed and re-added it).
             raise ConfigEntryAuthFailed("Bond token is no longer valid") from ex
         raise ConfigEntryNotReady from ex
     except (ClientError, TimeoutError, OSError) as error:
@@ -82,24 +79,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: BondConfigEntry) -> bool
         hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, _async_stop_event)
     )
 
-    fallback = BondFallbackCoordinator(hass, entry, hub, bpup_subs)
-    # hub.setup() already fetched every device's state; seed the coordinator
-    # instead of refetching.
-    fallback.async_set_updated_data(
-        {device.device_id: device.state for device in hub.devices}
-    )
-    telemetry = BondTelemetryCoordinator(hass, entry, bond, hub)
-    await telemetry.async_config_entry_first_refresh()
-
-    entry.runtime_data = BondData(hub, bpup_subs, fallback, telemetry)
-
     if not entry.unique_id:
         hass.config_entries.async_update_entry(entry, unique_id=hub.bond_id)
 
     assert hub.bond_id is not None
     hub_name = hub.name or hub.bond_id
     device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
+    hub_device_entry = device_registry.async_get_or_create(
         config_entry_id=config_entry_id,
         identifiers={(DOMAIN, hub.bond_id)},
         manufacturer=BRIDGE_MAKE,
@@ -109,6 +95,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: BondConfigEntry) -> bool
         hw_version=hub.mcu_ver,
         suggested_area=hub.location,
         configuration_url=f"http://{host}",
+    )
+
+    fallback = BondFallbackCoordinator(hass, entry, hub, bpup_subs)
+    # hub.setup() already fetched every device's state; seed the coordinator
+    # instead of refetching.
+    fallback.async_set_updated_data(
+        {device.device_id: device.state for device in hub.devices}
+    )
+    telemetry = BondTelemetryCoordinator(hass, entry, bond, hub)
+    await telemetry.async_config_entry_first_refresh()
+
+    entry.runtime_data = BondData(
+        hub, hub_device_entry.id, bpup_subs, fallback, telemetry
     )
 
     async_setup_services(hass)

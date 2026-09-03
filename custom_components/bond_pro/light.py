@@ -7,7 +7,6 @@ from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
 from .bond_async_pro import Action, DeviceType
-import voluptuous as vol
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -18,7 +17,6 @@ from homeassistant.components.light import (
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -31,11 +29,6 @@ _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 0
 
-SERVICE_SET_LIGHT_POWER_TRACKED_STATE = "set_light_power_tracked_state"
-SERVICE_SET_LIGHT_BRIGHTNESS_TRACKED_STATE = "set_light_brightness_tracked_state"
-
-ATTR_POWER_STATE = "power_state"
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -45,22 +38,6 @@ async def async_setup_entry(
     """Set up Bond light devices."""
     data = entry.runtime_data
     hub = data.hub
-
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        SERVICE_SET_LIGHT_POWER_TRACKED_STATE,
-        {vol.Required(ATTR_POWER_STATE): vol.Coerce(bool)},
-        "async_set_power_belief",
-    )
-    platform.async_register_entity_service(
-        SERVICE_SET_LIGHT_BRIGHTNESS_TRACKED_STATE,
-        {
-            vol.Required(ATTR_BRIGHTNESS): vol.All(
-                vol.Coerce(int), vol.Range(min=0, max=255)
-            )
-        },
-        "async_set_brightness_belief",
-    )
 
     fan_lights: list[Entity] = [
         BondLight(data, device, "light")

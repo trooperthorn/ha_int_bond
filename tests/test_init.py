@@ -26,7 +26,9 @@ async def test_setup_and_unload(hass: HomeAssistant) -> None:
     assert entry.state is ConfigEntryState.LOADED
 
     registry = dr.async_get(hass)
-    hub_device = registry.async_get_device(identifiers={(DOMAIN, BOND_ID)})
+    hub_device = registry.async_get_device_by_identifier(
+        (DOMAIN, BOND_ID), entry.entry_id
+    )
     assert hub_device is not None
     assert hub_device.manufacturer == "Olibra"
     assert hub_device.sw_version == "v4.32.7"

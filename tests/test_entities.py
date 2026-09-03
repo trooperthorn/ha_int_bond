@@ -32,12 +32,12 @@ from .common import (
     setup_bond,
 )
 
-FAN_ENTITY = "fan.master_fan"
-FAN_LIGHT_ENTITY = "light.front_bedroom_light"
-SWITCH_ENTITY = "switch.christmas_tree"
-FLAME_ENTITY = "number.fireplace_flame"
-BLUE_LIGHT_ENTITY = "light.master_bridge_blue_light"
-RSSI_ENTITY = "sensor.master_bridge_wi_fi_signal"
+FAN_ENTITY = "fan.master_bedroom_master_fan"
+FAN_LIGHT_ENTITY = "light.front_bedroom_front_bedroom_light"
+SWITCH_ENTITY = "switch.dining_room_christmas_tree"
+FLAME_ENTITY = "number.lab_fireplace_flame"
+BLUE_LIGHT_ENTITY = "light.lab_master_bridge_blue_light"
+RSSI_ENTITY = "sensor.lab_master_bridge_wi_fi_signal"
 
 
 async def test_entities_created(hass: HomeAssistant) -> None:
@@ -71,7 +71,7 @@ async def test_fan_state_and_speed(hass: HomeAssistant) -> None:
     assert state is not None
     assert state.state == STATE_OFF
     # Front Bedroom fan is off but its stored speed is 3 of max 3.
-    light_fan = hass.states.get("fan.front_bedroom")
+    light_fan = hass.states.get("fan.front_bedroom_front_bedroom")
     assert light_fan.attributes["percentage"] == 0
 
 
@@ -94,7 +94,7 @@ async def test_fan_actions(hass: HomeAssistant) -> None:
         await hass.services.async_call(
             FAN_DOMAIN,
             SERVICE_SET_PERCENTAGE,
-            {ATTR_ENTITY_ID: "fan.front_bedroom", ATTR_PERCENTAGE: 100},
+            {ATTR_ENTITY_ID: "fan.front_bedroom_front_bedroom", ATTR_PERCENTAGE: 100},
             blocking=True,
         )
     assert action.call_args[0][1] == Action.set_speed(3)

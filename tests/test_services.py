@@ -76,7 +76,7 @@ async def test_fan_speed_tracked_state(hass: HomeAssistant) -> None:
         await hass.services.async_call(
             DOMAIN,
             "set_fan_speed_tracked_state",
-            {"entity_id": "fan.master_fan", "speed": 50},
+            {"entity_id": "fan.master_bedroom_master_fan", "speed": 50},
             blocking=True,
         )
     # Two calls: power belief then speed belief.

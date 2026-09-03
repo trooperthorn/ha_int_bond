@@ -85,10 +85,6 @@ class BondProConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize config flow."""
         self._discovered: dict[str, str] = {}
 
-    # ------------------------------------------------------------------
-    # Discovery
-    # ------------------------------------------------------------------
-
     async def _async_try_automatic_configure(self) -> None:
         """Try to auto configure the device.
 
@@ -206,10 +202,6 @@ class BondProConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders=self._discovered,
         )
 
-    # ------------------------------------------------------------------
-    # User
-    # ------------------------------------------------------------------
-
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -230,10 +222,6 @@ class BondProConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=USER_SCHEMA, errors=errors
         )
-
-    # ------------------------------------------------------------------
-    # Reauth (new vs upstream)
-    # ------------------------------------------------------------------
 
     async def async_step_reauth(
         self, entry_data: dict[str, Any]
@@ -267,10 +255,6 @@ class BondProConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders={CONF_HOST: entry.data[CONF_HOST]},
         )
-
-    # ------------------------------------------------------------------
-    # Reconfigure (new vs upstream)
-    # ------------------------------------------------------------------
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None

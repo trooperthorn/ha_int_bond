@@ -15,6 +15,7 @@ class BondData:
     """Runtime data for the Bond Pro integration."""
 
     hub: BondHub
+    hub_device_id: str
     bpup_subs: BPUPSubscriptions
     fallback: BondFallbackCoordinator
     telemetry: BondTelemetryCoordinator

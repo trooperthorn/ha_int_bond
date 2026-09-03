@@ -40,10 +40,6 @@ class Bond:
         self._timeout = timeout
         self._session = session
 
-    # ------------------------------------------------------------------
-    # System / bridge
-    # ------------------------------------------------------------------
-
     async def version(self) -> dict:
         """Return the version of Bond reported by API."""
         return await self.__get("/v2/sys/version")
@@ -107,10 +103,6 @@ class Bond:
         """Reboot the Bond."""
         await self.__put("/v2/sys/reboot", {})
 
-    # ------------------------------------------------------------------
-    # Transports (BPUP / MQTT / HomeKit)
-    # ------------------------------------------------------------------
-
     async def bpup_config(self) -> dict:
         """Return the BPUP transport configuration."""
         return await self.__get("/v2/api/bpup")
@@ -131,17 +123,9 @@ class Bond:
         """Return the Bond HomeKit integration configuration."""
         return await self.__get("/v2/api/bhk")
 
-    # ------------------------------------------------------------------
-    # Signal / RF diagnostics
-    # ------------------------------------------------------------------
-
     async def signal_rssi(self) -> dict:
         """Return an RF noise scan: {"format": ["freq","rssi"], "results": [...]}."""
         return await self.__get("/v2/signal/rssi")
-
-    # ------------------------------------------------------------------
-    # Devices
-    # ------------------------------------------------------------------
 
     async def devices(self) -> List[str]:
         """Return the list of available device IDs reported by API."""
@@ -216,10 +200,6 @@ class Bond:
                 f"/v2/devices/{device_id}/actions/{action.name}", action.argument
             )
 
-    # ------------------------------------------------------------------
-    # Sidekicks (physical remotes)
-    # ------------------------------------------------------------------
-
     async def sidekicks(self) -> List[str]:
         """Return the list of paired Sidekick remote IDs."""
         json = await self.__get("/v2/sidekicks")
@@ -232,10 +212,6 @@ class Bond:
     async def sidekick_learn_status(self) -> dict:
         """Return the Sidekick learn-window status."""
         return await self.__get("/v2/sidekicks/_learn")
-
-    # ------------------------------------------------------------------
-    # Groups
-    # ------------------------------------------------------------------
 
     async def supports_groups(self) -> bool:
         """Return True if the Bond supports the Groups feature."""
@@ -275,10 +251,6 @@ class Bond:
             await self.__put(
                 f"/v2/groups/{group_id}/actions/{action.name}", action.argument
             )
-
-    # ------------------------------------------------------------------
-    # HTTP plumbing
-    # ------------------------------------------------------------------
 
     def __request_kwargs(self) -> dict:
         """Build per-request kwargs with fresh headers.

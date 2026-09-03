@@ -124,7 +124,7 @@ class BondRfFrequencySensor(SensorEntity):
         """Initialize the sensor from static device properties."""
         hub = data.hub
         self._attr_unique_id = f"{hub.bond_id}_{device.device_id}_rf_frequency"
-        self._attr_device_info = bond_device_info(hub, device)
+        self._attr_device_info = bond_device_info(hub, device, data.hub_device_id)
         # The bridge reports freq in kHz.
         self._attr_native_value = device.props["freq"] / 1000
         self._attr_extra_state_attributes = {

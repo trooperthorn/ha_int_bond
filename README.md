@@ -58,11 +58,14 @@ Import from `blueprints/automation/bond_pro/`:
 ## Development
 
 ```bash
+pip install pytest-homeassistant-custom-component==0.13.362
 pip install -r requirements_test.txt
 pytest
 ```
 
 The test suite (22 tests) runs on Linux and native Windows; `tests/conftest.py` documents the Windows socket/event-loop workarounds.
+
+See [docs/README.md](docs/README.md) for protocol- and wire-level facts behind the code.
 
 ## Known limitations
 

@@ -17,9 +17,7 @@ from .utils import BondDevice
 
 PARALLEL_UPDATES = 0
 
-# The api requires a step size even though it does not
-# seem to matter what it is as the underlying device is likely
-# getting an increase/decrease signal only
+# Required by the API but appears not to affect the device; see docs/protocol.md.
 STEP_SIZE = 10
 
 
@@ -256,9 +254,7 @@ async def async_setup_entry(
             )
         ]
         if device_entities and device.has_action(STOP_BUTTON.key):
-            # Most devices have the stop action available, but
-            # we only add the stop action button if we add actions
-            # since it's not so useful if there are no actions to stop
+            # Only useful when the device also has other action buttons to stop.
             device_entities.append(BondButtonEntity(data, device, STOP_BUTTON))
         if device.has_action(PRESET_BUTTON.key):
             device_entities.append(BondButtonEntity(data, device, PRESET_BUTTON))

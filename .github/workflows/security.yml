@@ -1,0 +1,50 @@
+# Static and dependency security checks on every push and pull request plus a
+# weekly run for new advisories. Each job is a required status check on main.
+#
+# This repository has no frontend (no JS CodeQL language, no npm audit), no
+# companion app (no ShellCheck job, no app image build/Grype scan).
+name: Security
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 7 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: CodeQL (python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@a35ac6e6798d72df5475948b28efb89edc2e19ca # v4.37.9 on 2026-09-03
+        with:
+          languages: python
+          build-mode: none
+      - uses: github/codeql-action/analyze@a35ac6e6798d72df5475948b28efb89edc2e19ca # v4.37.9 on 2026-09-03
+        with:
+          category: "/language:python"
+
+  python-security:
+    name: Python static security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Install pinned scanner
+        run: pip install "bandit==1.8.6"
+      - name: Compile Python
+        run: python -m compileall -q custom_components tests
+      - name: Bandit medium/high findings
+        run: bandit -q -r custom_components/bond_pro -ll

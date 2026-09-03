@@ -24,7 +24,7 @@
     "custom_components.bond_pro.bond_async_pro"
   ],
   "requirements": [],
-  "version": "0.1.1",
+  "version": "2026.09.03.1",
   "zeroconf": [
     "_bond._tcp.local."
   ]

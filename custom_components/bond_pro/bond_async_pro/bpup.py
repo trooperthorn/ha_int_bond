@@ -13,9 +13,7 @@ import orjson
 BPUP_INIT_PUSH_MESSAGE = b"\n"
 BPUP_PORT = 30007
 BPUP_ALIVE_TIMEOUT = 70
-# The bridge expires a BPUP session 60s after the last keep-alive.  Sending
-# every 30s means a single lost datagram no longer silently drops push
-# updates until the next interval (upstream used 60s, equal to the timeout).
+# Half the bridge's 60s session timeout; see docs/protocol.md.
 BPUP_KEEP_ALIVE_INTERVAL = 30
 RECONNECT_MIN_DELAY = 1.0
 RECONNECT_MAX_DELAY = 60.0
