@@ -16,12 +16,11 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientError
-from .bond_async_pro import Bond, BPUPSubscriptions
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.async_ import gather_with_limited_concurrency
 
+from .bond_async_pro import Bond, BPUPSubscriptions
 from .const import (
     DOMAIN,
     FALLBACK_INTERVAL_BPUP_ALIVE,
@@ -71,7 +70,7 @@ class BondFallbackCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
         )
         data: dict[str, dict[str, Any]] = {}
         errors = 0
-        for device, result in zip(devices, results):
+        for device, result in zip(devices, results, strict=True):
             if isinstance(result, Exception):
                 errors += 1
                 if not isinstance(result, (ClientError, TimeoutError, OSError)):

@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .bond_async_pro import BPUPSubscriptions
-
 from .coordinator import BondFallbackCoordinator, BondTelemetryCoordinator
 from .utils import BondHub
 

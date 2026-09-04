@@ -5,14 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
-from .bond_async_pro import Action, DeviceType
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BondConfigEntry
+from .bond_async_pro import Action, DeviceType
 from .entity import BondEntity
 
 PARALLEL_UPDATES = 0

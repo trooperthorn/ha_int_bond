@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from aiohttp import ClientConnectionError
-
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr

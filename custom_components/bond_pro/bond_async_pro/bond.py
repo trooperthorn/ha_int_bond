@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import random
 import uuid
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 import orjson
 from aiohttp import ClientSession, ClientTimeout
@@ -24,8 +25,8 @@ class Bond:
         token: str,
         requestor_uuid: RequestorUUID = RequestorUUID.ANONYMOUS,
         *,
-        session: Optional[ClientSession] = None,
-        timeout: Optional[ClientTimeout] = None,
+        session: ClientSession | None = None,
+        timeout: ClientTimeout | None = None,
     ):
         """Initialize Bond with provided host and token."""
         if not requestor_uuid.is_allowed():
@@ -127,7 +128,7 @@ class Bond:
         """Return an RF noise scan: {"format": ["freq","rssi"], "results": [...]}."""
         return await self.__get("/v2/signal/rssi")
 
-    async def devices(self) -> List[str]:
+    async def devices(self) -> list[str]:
         """Return the list of available device IDs reported by API."""
         json = await self.__get("/v2/devices")
         return [
@@ -168,7 +169,7 @@ class Bond:
         """Update the Power Cycle State of a device."""
         await self.__patch(f"/v2/devices/{device_id}/power_cycle_state", patch)
 
-    async def device_commands(self, device_id: str) -> List[str]:
+    async def device_commands(self, device_id: str) -> list[str]:
         """Return the list of command IDs stored for a device."""
         json = await self.__get(f"/v2/devices/{device_id}/commands")
         return [
@@ -200,7 +201,7 @@ class Bond:
                 f"/v2/devices/{device_id}/actions/{action.name}", action.argument
             )
 
-    async def sidekicks(self) -> List[str]:
+    async def sidekicks(self) -> list[str]:
         """Return the list of paired Sidekick remote IDs."""
         json = await self.__get("/v2/sidekicks")
         return [
@@ -218,7 +219,7 @@ class Bond:
         json = await self.__get("/v2/")
         return "groups" in json
 
-    async def groups(self) -> List[str]:
+    async def groups(self) -> list[str]:
         """Return the list of available group IDs reported by API."""
         json = await self.__get("/v2/groups")
         return [
