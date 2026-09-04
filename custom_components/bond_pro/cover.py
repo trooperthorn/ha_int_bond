@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from .bond_async_pro import Action, DeviceType
-
 from homeassistant.components.cover import (
     ATTR_POSITION,
     CoverDeviceClass,
@@ -16,6 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BondConfigEntry
+from .bond_async_pro import Action, DeviceType
 from .entity import BondEntity
 from .models import BondData
 from .utils import BondDevice

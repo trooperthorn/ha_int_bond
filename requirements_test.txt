@@ -1,4 +1,3 @@
-# Install pytest-homeassistant-custom-component first as shown in ci.yml; its
-# current release metadata still pins the final Home Assistant 2026.9 beta.
-homeassistant==2026.9.0
-aioresponses>=0.7.6
+pytest-homeassistant-custom-component==0.13.362
+aioresponses>=0.7.9
+ruff==0.16.3

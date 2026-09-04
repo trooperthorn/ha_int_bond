@@ -24,7 +24,12 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from release_config import CALVER_RE, ReleaseConfig, load, validate_versions  # noqa: E402
+from release_config import (
+    CALVER_RE,
+    ReleaseConfig,
+    load,
+    validate_versions,
+)
 
 
 def parse_calver(value: str) -> tuple[date, int]:

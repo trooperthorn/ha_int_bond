@@ -1,10 +1,4 @@
-# Turns release-bearing changes on protected main into a tested CalVer bump PR.
-# The existing Release workflow remains the sole tag and asset publisher.
-#
-# Requires the RELEASE_AUTOMATION_CLIENT_ID variable and
-# RELEASE_AUTOMATION_PRIVATE_KEY secret (a GitHub App installed on this
-# repository). Not configured yet for trooperthorn/ha_int_bond: the
-# credential-check step below fails cleanly before touching anything.
+# Turns release-bearing changes on protected main into a tested CalVer bump PR; see docs/operations.md.
 name: Prepare release
 
 on:
@@ -57,7 +51,7 @@ jobs:
             exit 1
           fi
 
-          LATEST_VERSION="$LATEST_TAG"
+          LATEST_VERSION="${LATEST_TAG#v}"
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "Version $CURRENT_VERSION is already ahead of published $LATEST_VERSION; release is pending."
             printf 'prepare=false\n' >> "$GITHUB_OUTPUT"
