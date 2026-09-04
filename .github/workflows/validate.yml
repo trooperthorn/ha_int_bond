@@ -23,7 +23,7 @@ jobs:
           category: integration
           # Not listed in home-assistant/brands, so that check never passes;
           # license metadata is read from the default branch only.
-          ignore: ${{ github.ref != 'refs/heads/main' && 'brands,license' || 'brands' }}
+          ignore: ${{ github.ref != 'refs/heads/main' && 'brands license' || 'brands' }}
 
   hassfest:
     name: hassfest (manifest sanity)
