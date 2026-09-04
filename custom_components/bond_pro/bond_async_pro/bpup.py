@@ -6,7 +6,8 @@ import asyncio
 import logging
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 import orjson
 
@@ -26,7 +27,7 @@ class BPUPSubscriptions:
 
     def __init__(self) -> None:
         """Init and store callbacks."""
-        self._callbacks: Dict[str, List[Callable]] = {}
+        self._callbacks: dict[str, list[Callable]] = {}
         self.last_message_time: float = -BPUP_ALIVE_TIMEOUT
 
     @property
@@ -46,7 +47,7 @@ class BPUPSubscriptions:
         """Unsubscribe from BPUP updates."""
         self._callbacks[device_id].remove(callback)
 
-    def notify(self, json_msg: Dict[str, Any]) -> None:
+    def notify(self, json_msg: dict[str, Any]) -> None:
         """Notify subscribers of an update."""
         self.last_message_time = time.monotonic()
 
@@ -75,13 +76,13 @@ class BPUProtocol(asyncio.Protocol):
     def __init__(
         self,
         bpup_subscriptions: BPUPSubscriptions,
-        on_connection_lost: Optional[Callable[[], None]] = None,
+        on_connection_lost: Callable[[], None] | None = None,
     ) -> None:
         """Create BPUP Protocol."""
         self.loop = asyncio.get_event_loop()
         self.bpup_subscriptions = bpup_subscriptions
-        self.transport: Optional[asyncio.DatagramTransport] = None
-        self.keep_alive: Optional[asyncio.TimerHandle] = None
+        self.transport: asyncio.DatagramTransport | None = None
+        self.keep_alive: asyncio.TimerHandle | None = None
         self._on_connection_lost = on_connection_lost
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
@@ -111,11 +112,11 @@ class BPUProtocol(asyncio.Protocol):
                 "%s: Failed to process BPUP message: %s: %s", addr, data, ex
             )
 
-    def error_received(self, exc: Optional[Exception]) -> None:
+    def error_received(self, exc: Exception | None) -> None:
         """Log errors."""
         _LOGGER.debug("BPUP error: %s", exc)
 
-    def connection_lost(self, exc: Optional[Exception]) -> None:
+    def connection_lost(self, exc: Exception | None) -> None:
         """Handle connection lost: notify owner so it can reconnect."""
         self.bpup_subscriptions.connection_lost()
         if self.keep_alive:
@@ -152,9 +153,9 @@ class BPUPClient:
         """Initialize the client for a host."""
         self._host = host
         self._subscriptions = subscriptions
-        self._protocol: Optional[BPUProtocol] = None
-        self._watchdog: Optional[asyncio.TimerHandle] = None
-        self._reconnect_task: Optional[asyncio.Task] = None
+        self._protocol: BPUProtocol | None = None
+        self._watchdog: asyncio.TimerHandle | None = None
+        self._reconnect_task: asyncio.Task | None = None
         self._stopped = False
         self._delay = RECONNECT_MIN_DELAY
         self._loop = asyncio.get_event_loop()

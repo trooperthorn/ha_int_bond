@@ -11,10 +11,9 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from aiohttp import ClientResponseError
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_HOST
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.bond_pro.const import DOMAIN
 
@@ -139,13 +138,13 @@ def patch_bond_api(
     if version is None:
         version = VERSION
 
-    def _device(self, device_id):  # noqa: ANN001
+    def _device(self, device_id):
         return devices[device_id]["attrs"]
 
-    def _props(self, device_id):  # noqa: ANN001
+    def _props(self, device_id):
         return devices[device_id]["props"]
 
-    def _state(self, device_id):  # noqa: ANN001
+    def _state(self, device_id):
         return devices[device_id]["state"]
 
     version_mock = AsyncMock(return_value=version)

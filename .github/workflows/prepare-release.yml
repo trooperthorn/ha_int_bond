@@ -1,10 +1,4 @@
-# Turns release-bearing changes on protected main into a tested CalVer bump PR.
-# The existing Release workflow remains the sole tag and asset publisher.
-#
-# Requires the RELEASE_AUTOMATION_CLIENT_ID variable and
-# RELEASE_AUTOMATION_PRIVATE_KEY secret (a GitHub App installed on this
-# repository). Not configured yet for trooperthorn/ha_int_bond: the
-# credential-check step below fails cleanly before touching anything.
+# Turns release-bearing changes on protected main into a tested CalVer bump PR; see docs/operations.md.
 name: Prepare release
 
 on:
@@ -43,13 +37,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CURRENT_VERSION="$(python3 - <<'PY'
-          from pathlib import Path
-          from scripts.build_release_artifacts import validate_versions
-          from scripts.release_config import load
-          print(validate_versions(load(Path.cwd())))
-          PY
-          )"
+          CURRENT_VERSION="$(python3 scripts/build_release_artifacts.py --validate-only)"
           LATEST_TAG="$(gh api "/repos/${GITHUB_REPOSITORY}/releases/latest" \
             --jq .tag_name 2>/dev/null || true)"
 
@@ -63,7 +51,7 @@ jobs:
             exit 1
           fi
 
-          LATEST_VERSION="$LATEST_TAG"
+          LATEST_VERSION="${LATEST_TAG#v}"
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "Version $CURRENT_VERSION is already ahead of published $LATEST_VERSION; release is pending."
             printf 'prepare=false\n' >> "$GITHUB_OUTPUT"
@@ -137,7 +125,7 @@ jobs:
           REMOTE_SHA="$(git ls-remote --heads origin "refs/heads/$BRANCH" | awk '{print $1}')"
           git switch --force-create "$BRANCH" origin/main
 
-          VERSION="$(python3 -m scripts.set_version \
+          VERSION="$(python3 scripts/set_version.py \
             --next-from-tags --timezone America/Chicago)"
           git config user.name "$BOT_NAME"
           git config user.email "$BOT_EMAIL"

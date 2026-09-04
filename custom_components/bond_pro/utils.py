@@ -6,10 +6,9 @@ import logging
 from typing import Any, cast
 
 from aiohttp import ClientResponseError
-from .bond_async_pro import Action, Bond, BondType
-
 from homeassistant.util.async_ import gather_with_limited_concurrency
 
+from .bond_async_pro import Action, Bond, BondType
 from .const import BRIDGE_MAKE
 
 MAX_REQUESTS = 6

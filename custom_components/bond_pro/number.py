@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from .bond_async_pro import Action, DeviceType
-
 from homeassistant.components.number import NumberEntity
-from homeassistant.const import PERCENTAGE
+from homeassistant.const import UnitOfRatio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BondConfigEntry
+from .bond_async_pro import Action, DeviceType
 from .entity import BondEntity
 from .models import BondData
 from .utils import BondDevice
@@ -37,7 +36,7 @@ class BondFlameNumber(BondEntity, NumberEntity):
     _attr_native_min_value = 0
     _attr_native_max_value = 100
     _attr_native_step = 1
-    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_native_unit_of_measurement = UnitOfRatio.PERCENTAGE
     _attr_translation_key = "flame"
 
     def __init__(self, data: BondData, device: BondDevice) -> None:

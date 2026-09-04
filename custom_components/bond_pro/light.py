@@ -6,8 +6,6 @@ import logging
 from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
-from .bond_async_pro import Action, DeviceType
-
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP_KELVIN,
@@ -21,6 +19,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BondConfigEntry
+from .bond_async_pro import Action, DeviceType
 from .entity import BondEntity, BondHubEntity
 from .models import BondData
 from .utils import BondDevice

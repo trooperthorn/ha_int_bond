@@ -23,7 +23,7 @@ from pathlib import Path
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from release_config import load, validate_versions  # noqa: E402
+from release_config import load, validate_versions
 
 _FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 _SKIP_PARTS = {"__pycache__", "node_modules"}

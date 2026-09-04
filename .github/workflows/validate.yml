@@ -1,9 +1,4 @@
-# Catches the class of problem that breaks a HACS install (a manifest or
-# hacs.json HACS cannot parse, a missing required key, a bad domain) before a
-# release is cut. The weekly run catches drift in the validators themselves.
-#
-# hacs/action and home-assistant/actions/hassfest publish no release tags, so
-# each pin is the head of its default branch at pin time, dated below.
+# HACS and hassfest validation on every push, pull request, and weekly.
 name: Validate
 
 on:
@@ -26,9 +21,9 @@ jobs:
       - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main on 2026-09-03
         with:
           category: integration
-          # HACS reads license metadata from the default branch, so feature
-          # branches skip that one check; main validates it.
-          ignore: ${{ github.ref != 'refs/heads/main' && 'license' || '' }}
+          # Not listed in home-assistant/brands, so that check never passes;
+          # license metadata is read from the default branch only.
+          ignore: ${{ github.ref != 'refs/heads/main' && 'brands license' || 'brands' }}
 
   hassfest:
     name: hassfest (manifest sanity)
