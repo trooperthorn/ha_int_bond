@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from http import HTTPStatus
 import logging
+from http import HTTPStatus
 from typing import Any
 
 from aiohttp import ClientError, ClientResponseError, ClientTimeout
-from .bond_async_pro import Bond, BPUPSubscriptions, RequestorUUID, start_bpup
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
@@ -22,6 +20,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import SLOW_UPDATE_WARNING
 
+from .bond_async_pro import Bond, BPUPSubscriptions, RequestorUUID, start_bpup
 from .const import BRIDGE_MAKE, DOMAIN
 from .coordinator import BondFallbackCoordinator, BondTelemetryCoordinator
 from .models import BondData

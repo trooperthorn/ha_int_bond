@@ -7,8 +7,6 @@ import math
 from typing import Any
 
 from aiohttp.client_exceptions import ClientResponseError
-from .bond_async_pro import Action, DeviceType, Direction
-
 from homeassistant.components.fan import (
     DIRECTION_FORWARD,
     DIRECTION_REVERSE,
@@ -25,6 +23,7 @@ from homeassistant.util.percentage import (
 from homeassistant.util.scaling import int_states_in_range
 
 from . import BondConfigEntry
+from .bond_async_pro import Action, DeviceType, Direction
 from .entity import BondEntity
 from .models import BondData
 from .utils import BondDevice
