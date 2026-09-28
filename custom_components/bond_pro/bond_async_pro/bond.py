@@ -9,7 +9,11 @@ from typing import Any
 
 import orjson
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp.client_exceptions import ClientOSError, ServerDisconnectedError
+from aiohttp.client_exceptions import (
+    ClientConnectorError,
+    ClientOSError,
+    ServerDisconnectedError,
+)
 
 from .action import Action
 from .bond_type import BondType
@@ -99,6 +103,43 @@ class Bond:
     async def backup_status(self) -> dict:
         """Return the status of any running backup or restore."""
         return await self.__get("/v2/sys/backup")
+
+    async def faults(self) -> dict:
+        """Return the controller fault summary.
+
+        Raises a 404 ClientResponseError on products without fault reporting.
+        """
+        return await self.__get("/v2/sys/faults")
+
+    async def clear_faults(self) -> None:
+        """Clear faults that need a manual clear (applied asynchronously)."""
+        await self.__patch("/v2/sys/faults", {"clear": True})
+
+    async def indicate(self) -> dict:
+        """Return seconds left on the identify/commit animations (MT-1500)."""
+        return await self.__get("/v2/sys/indicate")
+
+    async def set_indicate(self, seconds: int) -> None:
+        """Run the identify animation for 0-30 s (0 cancels)."""
+        if seconds < 0 or seconds > 30:
+            raise ValueError("Identify duration must be between 0 and 30")
+        await self.__patch("/v2/sys/indicate", {"identify": seconds})
+
+    async def power(self) -> dict:
+        """Return power supply and temperature readings (404 if unsupported)."""
+        return await self.__get("/v2/sys/power")
+
+    async def vitals(self) -> dict:
+        """Return usage counters (Mate Pro MT-1500, v4.28+)."""
+        return await self.__get("/v2/sys/vitals")
+
+    async def eth(self) -> dict:
+        """Return Ethernet settings (404 when the product has no Ethernet)."""
+        return await self.__get("/v2/sys/eth")
+
+    async def set_bpup_broadcast(self, broadcast: bool) -> None:
+        """Enable or disable broadcasting all state updates on port 30007."""
+        await self.__patch("/v2/api/bpup", {"broadcast": broadcast})
 
     async def reboot(self) -> None:
         """Reboot the Bond."""
@@ -201,6 +242,76 @@ class Bond:
                 f"/v2/devices/{device_id}/actions/{action.name}", action.argument
             )
 
+    async def reload_device(self, device_id: str) -> None:
+        """Rebuild a templated device's default commands.
+
+        Overwrites command customisations; state and properties are kept.
+        """
+        await self.__put(f"/v2/devices/{device_id}/reload", {})
+
+    async def scenes(self) -> list[str]:
+        """Return the list of scene IDs."""
+        json = await self.__get("/v2/scenes")
+        return [
+            key
+            for key in json
+            if not key.startswith("_") and isinstance(json[key], dict)
+        ]
+
+    async def scene(self, scene_id: str) -> dict:
+        """Return scene metadata (name, actors, types, locations)."""
+        return await self.__get(f"/v2/scenes/{scene_id}")
+
+    async def run_scene(self, scene_id: str) -> None:
+        """Run a scene; each actor is executed individually."""
+        await self.__put(f"/v2/scenes/{scene_id}/run", {})
+
+    async def channels(self) -> list[str]:
+        """Return channel IDs (Mate Pro MT-1500, Sidekick Blue SKS-500-B)."""
+        json = await self.__get("/v2/channels")
+        return [
+            key
+            for key in json
+            if not key.startswith("_") and isinstance(json[key], dict)
+        ]
+
+    async def channel(self, channel_id: str) -> dict:
+        """Return a channel's settings."""
+        return await self.__get(f"/v2/channels/{channel_id}")
+
+    async def channel_action(self, channel_id: str, action: Action) -> None:
+        """Execute an action on a channel."""
+        await self.__put(
+            f"/v2/channels/{channel_id}/actions/{action.name}", action.argument
+        )
+
+    async def skeds(self, kind: str, owner_id: str) -> dict[str, dict]:
+        """Return every sked of a device, group, scene or channel by sked ID."""
+        json = await self.__get(f"/v2/{kind}/{owner_id}/skeds")
+        sked_ids = [
+            key
+            for key in json
+            if not key.startswith("_") and isinstance(json[key], dict)
+        ]
+        return {
+            sked_id: await self.__get(f"/v2/{kind}/{owner_id}/skeds/{sked_id}")
+            for sked_id in sked_ids
+        }
+
+    async def create_sked(self, kind: str, owner_id: str, sked: dict) -> dict:
+        """Create a sked; returns {"_id": ...}."""
+        return await self.__post(f"/v2/{kind}/{owner_id}/skeds", sked)
+
+    async def update_sked(
+        self, kind: str, owner_id: str, sked_id: str, patch: dict
+    ) -> None:
+        """Change fields of an existing sked."""
+        await self.__patch(f"/v2/{kind}/{owner_id}/skeds/{sked_id}", patch)
+
+    async def delete_sked(self, kind: str, owner_id: str, sked_id: str) -> None:
+        """Delete a sked."""
+        await self.__delete(f"/v2/{kind}/{owner_id}/skeds/{sked_id}")
+
     async def sidekicks(self) -> list[str]:
         """Return the list of paired Sidekick remote IDs."""
         json = await self.__get("/v2/sidekicks")
@@ -247,11 +358,10 @@ class Bond:
     async def group_action(self, group_id: str, action: Action) -> None:
         """Execute given action for a given group."""
         if action.name == Action.SET_STATE_BELIEF:
-            await self.__patch(f"/v2/groups/{group_id}/state", action.argument)
-        else:
-            await self.__put(
-                f"/v2/groups/{group_id}/actions/{action.name}", action.argument
-            )
+            raise ValueError("Group state cannot be PATCHed")
+        await self.__put(
+            f"/v2/groups/{group_id}/actions/{action.name}", action.argument
+        )
 
     def __request_kwargs(self) -> dict:
         """Build per-request kwargs with fresh headers.
@@ -276,9 +386,12 @@ class Bond:
                 f"http://{self._host}{path}", **self.__request_kwargs()
             ) as response:
                 response.raise_for_status()
+                if response.status == 204:
+                    # Documented for /v2/sys/upgrade and /v2/sys/backup.
+                    return {}
                 return await response.json(loads=orjson.loads)
 
-        return await self.__call(get)
+        return await self.__call(get, idempotent=True)
 
     async def __patch(self, path: str, json: Any) -> None:
         async def patch(session: ClientSession) -> None:
@@ -289,6 +402,25 @@ class Bond:
 
         await self.__call(patch)
 
+    async def __post(self, path: str, json: Any) -> dict:
+        async def post(session: ClientSession) -> dict:
+            async with session.post(
+                f"http://{self._host}{path}", **self.__request_kwargs(), json=json
+            ) as response:
+                response.raise_for_status()
+                return await response.json(loads=orjson.loads)
+
+        return await self.__call(post)
+
+    async def __delete(self, path: str) -> None:
+        async def delete(session: ClientSession) -> None:
+            async with session.delete(
+                f"http://{self._host}{path}", **self.__request_kwargs()
+            ) as response:
+                response.raise_for_status()
+
+        await self.__call(delete)
+
     async def __put(self, path: str, json: Any) -> None:
         async def put(session: ClientSession) -> None:
             async with session.put(
@@ -298,16 +430,22 @@ class Bond:
 
         await self.__call(put)
 
-    async def __call(self, handler: Callable[[ClientSession], Any]):
+    async def __call(
+        self, handler: Callable[[ClientSession], Any], idempotent: bool = False
+    ):
         if not self._session:
             async with ClientSession() as request_session:
                 return await handler(request_session)
         else:
             try:
                 return await handler(self._session)
-            except (ClientOSError, ServerDisconnectedError):
-                # bond has a short connection close time
-                # so we need to retry if we idled for a bit
+            except (ClientOSError, ServerDisconnectedError) as err:
+                # bond has a short connection close time so a reused idle
+                # connection can drop. Unless the connect itself failed, the
+                # bond may already have run the request, so only replay reads
+                # (a replayed Toggle* action would flip the device back).
+                if not idempotent and not isinstance(err, ClientConnectorError):
+                    raise
                 return await handler(self._session)
 
     def __create_message_id(self) -> str:

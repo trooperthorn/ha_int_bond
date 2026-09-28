@@ -28,11 +28,13 @@ from .services import async_setup_services
 from .utils import BondHub
 
 PLATFORMS = [
+    Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.COVER,
     Platform.FAN,
     Platform.LIGHT,
     Platform.NUMBER,
+    Platform.SCENE,
     Platform.SENSOR,
     Platform.SWITCH,
 ]
@@ -100,7 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BondConfigEntry) -> bool
     # hub.setup() already fetched every device's state; seed the coordinator
     # instead of refetching.
     fallback.async_set_updated_data(
-        {device.device_id: device.state for device in hub.devices}
+        {device.device_id: device.state for device in hub.entity_sources}
     )
     telemetry = BondTelemetryCoordinator(hass, entry, bond, hub)
     await telemetry.async_config_entry_first_refresh()
@@ -127,7 +129,9 @@ async def async_remove_config_entry_device(
     """Allow removal of a device that the hub no longer reports."""
     data = config_entry.runtime_data
     hub = data.hub
-    valid_ids = {f"{hub.bond_id}_{device.device_id}" for device in hub.devices}
+    valid_ids = {
+        f"{hub.bond_id}_{device.device_id}" for device in hub.entity_sources
+    }
     valid_ids.add(hub.bond_id or hub.host)
     return not any(
         identifier[0] == DOMAIN and identifier[1] in valid_ids

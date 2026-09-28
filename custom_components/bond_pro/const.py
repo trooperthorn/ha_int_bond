@@ -16,3 +16,4 @@ FALLBACK_INTERVAL_BPUP_ALIVE = timedelta(minutes=5)
 
 # Bridge telemetry (Wi-Fi RSSI, uptime, blue light) polling.
 TELEMETRY_INTERVAL = timedelta(seconds=60)
+

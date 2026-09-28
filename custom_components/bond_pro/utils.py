@@ -42,6 +42,17 @@ class BondDevice:
             "state": self.state,
         }.__repr__()
 
+    is_group = False
+
+    @property
+    def topic(self) -> str:
+        """Return the BPUP topic carrying this device's state."""
+        return f"devices/{self.device_id}/state"
+
+    def api(self, bond: Bond) -> Bond | BondGroupApi:
+        """Return the object entities send actions and state requests to."""
+        return bond
+
     @property
     def name(self) -> str:
         """Get the name of this device."""
@@ -97,13 +108,43 @@ class BondDevice:
         """Return True if this device supports setting the position."""
         return self._has_any_action({Action.SET_POSITION})
 
+    def open_action(self) -> str | None:
+        """Return the action that opens this device.
+
+        Some shades only expose Raise/Lower or Retract/Extend, which the
+        bridge maps to Open/Close through open_raises/open_retracts.
+        """
+        return next(
+            (
+                action
+                for action in (Action.OPEN, Action.RAISE, Action.RETRACT)
+                if self.has_action(action)
+            ),
+            None,
+        )
+
+    def close_action(self) -> str | None:
+        """Return the action that closes this device."""
+        return next(
+            (
+                action
+                for action in (Action.CLOSE, Action.LOWER, Action.EXTEND)
+                if self.has_action(action)
+            ),
+            None,
+        )
+
     def supports_open(self) -> bool:
         """Return True if this device supports opening."""
-        return self._has_any_action({Action.OPEN})
+        return self.open_action() is not None
 
     def supports_close(self) -> bool:
         """Return True if this device supports closing."""
-        return self._has_any_action({Action.CLOSE})
+        return self.close_action() is not None
+
+    def supports_set_tilt_position(self) -> bool:
+        """Return True if this device supports SetTiltPosition (degrees)."""
+        return self._has_any_action({Action.SET_TILT_POSITION})
 
     def supports_tilt_open(self) -> bool:
         """Return True if this device supports tilt opening."""
@@ -144,6 +185,63 @@ class BondDevice:
         return self._has_any_action({Action.SET_FLAME})
 
 
+class BondGroupApi:
+    """Routes a group entity's action and state calls to /v2/groups.
+
+    Entity platforms call ``action`` and ``device_state`` with an ID; for a
+    group that ID is the group ID, so this lets every platform drive groups
+    unchanged.
+    """
+
+    def __init__(self, bond: Bond) -> None:
+        """Wrap the hub's Bond API."""
+        self._bond = bond
+
+    async def action(self, group_id: str, action: Action) -> None:
+        """Execute an action on every member device (one request)."""
+        await self._bond.group_action(group_id, action)
+
+    async def device_state(self, group_id: str) -> dict:
+        """Return the state variables common to every member device."""
+        return await self._bond.group_state(group_id)
+
+
+class BondGroup(BondDevice):
+    """A Bond group, exposed like a device of its members' common type.
+
+    Group state lists only variables shared by all members, with null where
+    members differ.  Groups cannot take state-belief PATCHes.
+    """
+
+    is_group = True
+
+    @property
+    def topic(self) -> str:
+        """Return the BPUP topic carrying this group's state."""
+        return f"groups/{self.device_id}/state"
+
+    def api(self, bond: Bond) -> Bond | BondGroupApi:
+        """Route calls to the group endpoints."""
+        return BondGroupApi(bond)
+
+    @property
+    def type(self) -> str:
+        """Return the members' device type, or "" for mixed groups."""
+        types = self.attrs.get("types") or []
+        return types[0] if len(types) == 1 else ""
+
+    @property
+    def location(self) -> str | None:
+        """Return the members' location when they share one."""
+        locations = self.attrs.get("locations") or []
+        return locations[0] if len(locations) == 1 else None
+
+    @property
+    def template(self) -> str | None:
+        """Groups have no template."""
+        return None
+
+
 class BondHub:
     """Hub device representing Bond Bridge."""
 
@@ -154,6 +252,8 @@ class BondHub:
         self._bridge: dict[str, Any] = {}
         self._version: dict[str, Any] = {}
         self._devices: list[BondDevice] = []
+        self._groups: list[BondGroup] = []
+        self._scenes: dict[str, dict[str, Any]] = {}
 
     async def setup(self, max_devices: int | None = None) -> None:
         """Read hub version information."""
@@ -190,12 +290,50 @@ class BondHub:
             response_idx += 3
 
         _LOGGER.debug("Discovered Bond devices: %s", self._devices)
+        await self._setup_groups()
+        await self._setup_scenes()
         try:
             # Smart by bond devices do not have a bridge api call
             self._bridge = await self.bond.bridge()
         except ClientResponseError:
             self._bridge = {}
         _LOGGER.debug("Bond reported the following bridge info: %s", self._bridge)
+
+    async def _setup_groups(self) -> None:
+        """Fetch groups; products without group support answer 404."""
+        try:
+            group_ids = await self.bond.groups()
+        except ClientResponseError:
+            group_ids = []
+        responses = await gather_with_limited_concurrency(
+            MAX_REQUESTS,
+            *(
+                request
+                for group_id in group_ids
+                for request in (
+                    self.bond.group(group_id),
+                    self.bond.group_properties(group_id),
+                    self.bond.group_state(group_id),
+                )
+            ),
+        )
+        self._groups = [
+            BondGroup(group_id, *responses[idx * 3 : idx * 3 + 3])
+            for idx, group_id in enumerate(group_ids)
+        ]
+        _LOGGER.debug("Discovered Bond groups: %s", self._groups)
+
+    async def _setup_scenes(self) -> None:
+        """Fetch scenes; products without scene support answer 404."""
+        try:
+            scene_ids = await self.bond.scenes()
+        except ClientResponseError:
+            scene_ids = []
+        scenes = await gather_with_limited_concurrency(
+            MAX_REQUESTS, *(self.bond.scene(scene_id) for scene_id in scene_ids)
+        )
+        self._scenes = dict(zip(scene_ids, scenes, strict=True))
+        _LOGGER.debug("Discovered Bond scenes: %s", self._scenes)
 
     @property
     def bond_id(self) -> str | None:
@@ -266,6 +404,21 @@ class BondHub:
     def devices(self) -> list[BondDevice]:
         """Return a list of all devices controlled by this hub."""
         return self._devices
+
+    @property
+    def groups(self) -> list[BondGroup]:
+        """Return the groups defined on this hub."""
+        return self._groups
+
+    @property
+    def scenes(self) -> dict[str, dict[str, Any]]:
+        """Return scene metadata keyed by scene ID."""
+        return self._scenes
+
+    @property
+    def entity_sources(self) -> list[BondDevice]:
+        """Return devices followed by groups: everything entities wrap."""
+        return [*self._devices, *self._groups]
 
     @property
     def is_bridge(self) -> bool:

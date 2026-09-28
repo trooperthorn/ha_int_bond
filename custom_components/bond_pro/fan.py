@@ -45,7 +45,7 @@ async def async_setup_entry(
 
     async_add_entities(
         BondFan(data, device)
-        for device in data.hub.devices
+        for device in data.hub.entity_sources
         if DeviceType.is_fan(device.type)
     )
 

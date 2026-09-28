@@ -33,6 +33,7 @@ VERSION = {
 
 BRIDGE = {"name": "Master BRIDGE", "location": "Lab", "bluelight": 30}
 
+FAULTS = {"controller": {"faults": [], "raise_count": 0}}
 WIFI_STA = {"ssid": "d2lmaW90", "rssi": -72, "ip": "192.168.1.9", "gw": "192.168.1.1"}
 
 FAN_ID = "f3b20e39bfe4459a"
@@ -88,7 +89,7 @@ SWITCH_DEVICE = {
     "name": "Christmas Tree",
     "type": "GX",
     "location": "Dining Room",
-    "actions": ["Stop", "TogglePower", "TurnOff", "TurnOn"],
+    "actions": ["Pair", "Stop", "TogglePower", "TurnOff", "TurnOn", "Unpair"],
 }
 SWITCH_PROPS = {"trust_state": False}
 SWITCH_STATE = {"power": 0}
@@ -131,6 +132,11 @@ def patch_bond_api(
     devices: dict[str, dict[str, Any]] | None = None,
     version: dict[str, Any] | None = None,
     version_side_effect: Exception | None = None,
+    faults: dict[str, Any] | None = None,
+    faults_side_effect: Exception | None = None,
+    groups: dict[str, dict[str, Any]] | None = None,
+    scenes: dict[str, dict[str, Any]] | None = None,
+    overrides: dict[str, Any] | None = None,
 ):
     """Patch every vendored Bond method the integration calls."""
     if devices is None:
@@ -146,6 +152,35 @@ def patch_bond_api(
 
     def _state(self, device_id):
         return devices[device_id]["state"]
+
+    groups = groups or {}
+    scenes = scenes or {}
+
+    def _group(self, group_id):
+        return groups[group_id]["attrs"]
+
+    def _group_props(self, group_id):
+        return groups[group_id]["props"]
+
+    def _group_state(self, group_id):
+        return groups[group_id]["state"]
+
+    def _scene(self, scene_id):
+        return scenes[scene_id]
+
+    # Endpoints a BD-1000 does not have answer 404 unless a test overrides them.
+    extra: dict[str, Any] = {
+        "groups": AsyncMock(return_value=list(groups)),
+        "scenes": AsyncMock(return_value=list(scenes)),
+        "power": AsyncMock(side_effect=make_client_response_error(404)),
+        "indicate": AsyncMock(side_effect=make_client_response_error(404)),
+        "bpup_config": AsyncMock(return_value={"broadcast": False}),
+    }
+    extra.update(overrides or {})
+
+    if faults is None:
+        faults = FAULTS
+    faults_mock = AsyncMock(return_value=faults, side_effect=faults_side_effect)
 
     version_mock = AsyncMock(return_value=version)
     if version_side_effect is not None:
@@ -172,6 +207,17 @@ def patch_bond_api(
         patch("custom_components.bond_pro.bond_async_pro.Bond.device_state", autospec=True, side_effect=_state),
         patch("custom_components.bond_pro.bond_async_pro.Bond.bridge", AsyncMock(return_value=dict(BRIDGE))),
         patch("custom_components.bond_pro.bond_async_pro.Bond.wifi_sta", AsyncMock(return_value=dict(WIFI_STA))),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.faults", faults_mock),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.group", autospec=True, side_effect=_group),
+        patch(
+            "custom_components.bond_pro.bond_async_pro.Bond.group_properties", autospec=True, side_effect=_group_props
+        ),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.group_state", autospec=True, side_effect=_group_state),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.scene", autospec=True, side_effect=_scene),
+        patch.multiple(
+            "custom_components.bond_pro.bond_async_pro.Bond",
+            **extra,
+        ),
         patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action_mock,
     ):
         yield action_mock
@@ -200,11 +246,12 @@ def make_entry(unique_id: str | None = BOND_ID) -> MockConfigEntry:
 async def setup_bond(
     hass: HomeAssistant,
     devices: dict[str, dict[str, Any]] | None = None,
+    **api_kwargs: Any,
 ) -> MockConfigEntry:
     """Set up the integration with a mocked bridge; returns the entry."""
     entry = make_entry()
     entry.add_to_hass(hass)
-    with patch_bond_api(devices=devices), patch_start_bpup():
+    with patch_bond_api(devices=devices, **api_kwargs), patch_start_bpup():
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     return entry
