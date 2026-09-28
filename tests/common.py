@@ -33,6 +33,7 @@ VERSION = {
 
 BRIDGE = {"name": "Master BRIDGE", "location": "Lab", "bluelight": 30}
 
+FAULTS = {"controller": {"faults": [], "raise_count": 0}}
 WIFI_STA = {"ssid": "d2lmaW90", "rssi": -72, "ip": "192.168.1.9", "gw": "192.168.1.1"}
 
 FAN_ID = "f3b20e39bfe4459a"
@@ -88,7 +89,7 @@ SWITCH_DEVICE = {
     "name": "Christmas Tree",
     "type": "GX",
     "location": "Dining Room",
-    "actions": ["Stop", "TogglePower", "TurnOff", "TurnOn"],
+    "actions": ["Pair", "Stop", "TogglePower", "TurnOff", "TurnOn", "Unpair"],
 }
 SWITCH_PROPS = {"trust_state": False}
 SWITCH_STATE = {"power": 0}
@@ -131,6 +132,8 @@ def patch_bond_api(
     devices: dict[str, dict[str, Any]] | None = None,
     version: dict[str, Any] | None = None,
     version_side_effect: Exception | None = None,
+    faults: dict[str, Any] | None = None,
+    faults_side_effect: Exception | None = None,
 ):
     """Patch every vendored Bond method the integration calls."""
     if devices is None:
@@ -146,6 +149,10 @@ def patch_bond_api(
 
     def _state(self, device_id):
         return devices[device_id]["state"]
+
+    if faults is None:
+        faults = FAULTS
+    faults_mock = AsyncMock(return_value=faults, side_effect=faults_side_effect)
 
     version_mock = AsyncMock(return_value=version)
     if version_side_effect is not None:
@@ -172,6 +179,7 @@ def patch_bond_api(
         patch("custom_components.bond_pro.bond_async_pro.Bond.device_state", autospec=True, side_effect=_state),
         patch("custom_components.bond_pro.bond_async_pro.Bond.bridge", AsyncMock(return_value=dict(BRIDGE))),
         patch("custom_components.bond_pro.bond_async_pro.Bond.wifi_sta", AsyncMock(return_value=dict(WIFI_STA))),
+        patch("custom_components.bond_pro.bond_async_pro.Bond.faults", faults_mock),
         patch("custom_components.bond_pro.bond_async_pro.Bond.action", AsyncMock()) as action_mock,
     ):
         yield action_mock

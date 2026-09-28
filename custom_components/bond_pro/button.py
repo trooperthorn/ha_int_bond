@@ -5,12 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BondConfigEntry
 from .bond_async_pro import Action
-from .entity import BondEntity
+from .entity import BondEntity, BondHubEntity
 from .models import BondData
 from .utils import BondDevice
 
@@ -232,6 +233,36 @@ PRESET_BUTTON = BondButtonEntityDescription(
     argument=None,
 )
 
+# Pair feature. These change the appliance's address table and need the
+# appliance in pairing mode (except UnpairSelf), so they are config buttons
+# and disabled by default. On devices without Unpair, Pair toggles.
+PAIRING_BUTTONS: tuple[BondButtonEntityDescription, ...] = (
+    BondButtonEntityDescription(
+        key=Action.PAIR,
+        translation_key="pair",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        mutually_exclusive=None,
+        argument=None,
+    ),
+    BondButtonEntityDescription(
+        key=Action.UNPAIR,
+        translation_key="unpair",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        mutually_exclusive=None,
+        argument=None,
+    ),
+    BondButtonEntityDescription(
+        key=Action.UNPAIR_SELF,
+        translation_key="unpair_self",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        mutually_exclusive=None,
+        argument=None,
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -240,7 +271,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Bond button devices."""
     data = entry.runtime_data
-    entities: list[BondButtonEntity] = []
+    entities: list[ButtonEntity] = []
 
     for device in data.hub.devices:
         device_entities = [
@@ -257,7 +288,15 @@ async def async_setup_entry(
             device_entities.append(BondButtonEntity(data, device, STOP_BUTTON))
         if device.has_action(PRESET_BUTTON.key):
             device_entities.append(BondButtonEntity(data, device, PRESET_BUTTON))
+        device_entities.extend(
+            BondButtonEntity(data, device, description)
+            for description in PAIRING_BUTTONS
+            if device.has_action(description.key)
+        )
         entities.extend(device_entities)
+
+    if data.telemetry.supports_faults:
+        entities.append(BondClearFaultsButton(data))
 
     async_add_entities(entities)
 
@@ -291,3 +330,19 @@ class BondButtonEntity(BondEntity, ButtonEntity):
 
     def _apply_state(self) -> None:
         """Buttons are stateless."""
+
+
+class BondClearFaultsButton(BondHubEntity, ButtonEntity):
+    """Clear bridge controller faults that need a manual clear."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_translation_key = "clear_faults"
+
+    def __init__(self, data: BondData) -> None:
+        """Initialize the button."""
+        super().__init__(data, "clear_faults")
+
+    async def async_press(self) -> None:
+        """Send the clear; the bridge applies it asynchronously."""
+        await self._bond.clear_faults()
+        await self.coordinator.async_request_refresh()

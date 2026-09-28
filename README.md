@@ -21,6 +21,9 @@ Runs alongside or instead of the core `bond` integration under its own domain, `
 | RF frequency per device | device properties | Diagnostic, disabled by default; carries `bps`, `zero_gap` attributes |
 | Blue light | `/v2/bridge` `bluelight` | The bridge's ring light as a dimmable light (config category) |
 | Flame | `SetFlame` | Number entity (0-100 %) for fireplaces |
+| Faults | `/v2/sys/faults` | Problem binary sensor (`faults`, `raise_count` attributes); only created when the bridge supports fault reporting |
+| Clear faults | `PATCH /v2/sys/faults` | Config button on the bridge; clears faults that need a manual clear |
+| Pair / Unpair / Unpair from all appliances | `Pair`, `Unpair`, `UnpairSelf` | Config buttons, disabled by default, on devices that expose those actions. Without `Unpair`, `Pair` toggles |
 
 ### New actions (services)
 - `bond_pro.rf_scan` — returns the bridge's RF noise scan (`freq_khz`/`rssi` pairs across all supported bands) as response data. Useful for diagnosing flaky RF devices.
@@ -66,6 +69,28 @@ pytest
 The test suite (22 tests) runs on Linux and native Windows; `tests/conftest.py` documents the Windows socket/event-loop workarounds.
 
 See [docs/README.md](docs/README.md) for protocol- and wire-level facts behind the code.
+
+## Deferred features
+
+Documented in the [Bond Local API](https://docs-local.appbond.com/) but deliberately not implemented yet. The same list is in `DEFERRED_FEATURES` in `const.py` and under `deferred_features` in diagnostics.
+
+| Feature | API |
+| --- | --- |
+| Groups | `/v2/groups` (library calls exist, no platform) |
+| Scenes | `/v2/scenes`, `PUT /v2/scenes/{id}/run` |
+| Schedules | `/v2/{devices,groups,scenes}/{id}/skeds` |
+| Reboot button | `PUT /v2/sys/reboot` (library call exists) |
+| Identify button | `/v2/sys/indicate` |
+| Power / vitals diagnostics | `/v2/sys/power`, `/v2/sys/vitals` (Mate Pro, v4.28+) |
+| Ethernet diagnostics | `/v2/sys/eth` |
+| Device reload | `PUT /v2/devices/{id}/reload` |
+| Channels | `/v2/channels` (Mate) |
+| BPUP broadcast option | `PATCH /v2/api/bpup` |
+| Shade tilt | `ToggleTilt`, `SetTiltPosition` |
+| Top-down/bottom-up shades | upper/lower rail actions |
+| Sheer/blackout shades | `SetSheerPosition`, `SetBlackoutPosition` |
+| Raise/Lower-only shades | `Raise`, `Lower`, `Retract`, `Extend` |
+| Heat | `SetHeat`, `IncreaseHeat`, `DecreaseHeat`, `HeatPresetNext`/`Prev` |
 
 ## Known limitations
 

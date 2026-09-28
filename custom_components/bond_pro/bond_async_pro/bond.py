@@ -9,7 +9,11 @@ from typing import Any
 
 import orjson
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp.client_exceptions import ClientOSError, ServerDisconnectedError
+from aiohttp.client_exceptions import (
+    ClientConnectorError,
+    ClientOSError,
+    ServerDisconnectedError,
+)
 
 from .action import Action
 from .bond_type import BondType
@@ -99,6 +103,17 @@ class Bond:
     async def backup_status(self) -> dict:
         """Return the status of any running backup or restore."""
         return await self.__get("/v2/sys/backup")
+
+    async def faults(self) -> dict:
+        """Return the controller fault summary.
+
+        Raises a 404 ClientResponseError on products without fault reporting.
+        """
+        return await self.__get("/v2/sys/faults")
+
+    async def clear_faults(self) -> None:
+        """Clear faults that need a manual clear (applied asynchronously)."""
+        await self.__patch("/v2/sys/faults", {"clear": True})
 
     async def reboot(self) -> None:
         """Reboot the Bond."""
@@ -276,9 +291,12 @@ class Bond:
                 f"http://{self._host}{path}", **self.__request_kwargs()
             ) as response:
                 response.raise_for_status()
+                if response.status == 204:
+                    # Documented for /v2/sys/upgrade and /v2/sys/backup.
+                    return {}
                 return await response.json(loads=orjson.loads)
 
-        return await self.__call(get)
+        return await self.__call(get, idempotent=True)
 
     async def __patch(self, path: str, json: Any) -> None:
         async def patch(session: ClientSession) -> None:
@@ -298,16 +316,22 @@ class Bond:
 
         await self.__call(put)
 
-    async def __call(self, handler: Callable[[ClientSession], Any]):
+    async def __call(
+        self, handler: Callable[[ClientSession], Any], idempotent: bool = False
+    ):
         if not self._session:
             async with ClientSession() as request_session:
                 return await handler(request_session)
         else:
             try:
                 return await handler(self._session)
-            except (ClientOSError, ServerDisconnectedError):
-                # bond has a short connection close time
-                # so we need to retry if we idled for a bit
+            except (ClientOSError, ServerDisconnectedError) as err:
+                # bond has a short connection close time so a reused idle
+                # connection can drop. Unless the connect itself failed, the
+                # bond may already have run the request, so only replay reads
+                # (a replayed Toggle* action would flip the device back).
+                if not idempotent and not isinstance(err, ClientConnectorError):
+                    raise
                 return await handler(self._session)
 
     def __create_message_id(self) -> str:

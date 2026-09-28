@@ -76,7 +76,14 @@
       "decrease_position": { "name": "Decrease position" },
       "open_next": { "name": "Open next" },
       "close_next": { "name": "Close next" },
-      "preset": { "name": "Preset" }
+      "preset": { "name": "Preset" },
+      "pair": { "name": "Pair" },
+      "unpair": { "name": "Unpair" },
+      "unpair_self": { "name": "Unpair from all appliances" },
+      "clear_faults": { "name": "Clear faults" }
+    },
+    "binary_sensor": {
+      "faults": { "name": "Faults" }
     },
     "light": {
       "up_light": { "name": "Up light" },

@@ -8,7 +8,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-from aiohttp import ClientConnectionError, ClientResponseError
+from aiohttp import ClientConnectionError, ClientResponseError, ClientTimeout
 from homeassistant.config_entries import ConfigEntryState, ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant
@@ -25,6 +25,9 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# aiohttp's default is 5 minutes, which would hang the config flow UI.
+_FLOW_TIMEOUT = 10
+
 
 USER_SCHEMA = vol.Schema(
     {vol.Required(CONF_HOST): str, vol.Required(CONF_ACCESS_TOKEN): str}
@@ -40,6 +43,7 @@ async def async_get_token(hass: HomeAssistant, host: str) -> str | None:
         host,
         "",
         session=async_get_clientsession(hass),
+        timeout=ClientTimeout(total=_FLOW_TIMEOUT),
         requestor_uuid=RequestorUUID.HOME_ASSISTANT,
     )
     response: dict[str, str] = {}
@@ -54,6 +58,7 @@ async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> tuple[st
         data[CONF_HOST],
         data[CONF_ACCESS_TOKEN],
         session=async_get_clientsession(hass),
+        timeout=ClientTimeout(total=_FLOW_TIMEOUT),
         requestor_uuid=RequestorUUID.HOME_ASSISTANT,
     )
     try:

@@ -28,6 +28,7 @@ from .services import async_setup_services
 from .utils import BondHub
 
 PLATFORMS = [
+    Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.COVER,
     Platform.FAN,

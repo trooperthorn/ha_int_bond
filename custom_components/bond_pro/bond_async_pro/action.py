@@ -101,6 +101,8 @@ class Action:
     OPEN_NEXT = "OpenNext"
     PAIR = "Pair"
     PRESET = "Preset"
+    UNPAIR = "Unpair"
+    UNPAIR_SELF = "UnpairSelf"
     SAVE_LIMIT_BOTTOM_OEM = "SaveLimitBottomOEM"
     SAVE_LIMIT_TOP_OEM = "SaveLimitTopOEM"
     SET_LIMIT_BOTTOM_OEM = "SetLimitBottomOEM"

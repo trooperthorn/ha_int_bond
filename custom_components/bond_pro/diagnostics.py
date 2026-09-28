@@ -9,6 +9,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from . import BondConfigEntry
+from .const import DEFERRED_FEATURES
 
 TO_REDACT = {"access_token", "addr", "ssid", "bssid", "mac", "ip", "gw", "dns"}
 
@@ -38,7 +39,9 @@ async def async_get_config_entry_diagnostics(
             "bridge": hub.bridge_info,
             "wifi": async_redact_data(wifi, TO_REDACT),
             "rf_scan": rf_scan,
+            "faults": (data.telemetry.data or {}).get("faults"),
         },
+        "deferred_features": sorted(DEFERRED_FEATURES),
         "bpup": {
             "alive": data.bpup_subs.alive,
         },

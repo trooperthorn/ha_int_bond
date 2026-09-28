@@ -1,6 +1,9 @@
 {
   "entity": {
     "button": {
+      "clear_faults": {
+        "default": "mdi:alert-remove"
+      },
       "close_next": {
         "default": "mdi:minus-box"
       },
@@ -58,6 +61,9 @@
       "open_next": {
         "default": "mdi:plus-box"
       },
+      "pair": {
+        "default": "mdi:link-variant"
+      },
       "start_decreasing_brightness": {
         "default": "mdi:brightness-percent"
       },
@@ -90,6 +96,12 @@
       },
       "toggle_up_light": {
         "default": "mdi:lightbulb"
+      },
+      "unpair": {
+        "default": "mdi:link-variant-off"
+      },
+      "unpair_self": {
+        "default": "mdi:link-variant-remove"
       }
     },
     "light": {
