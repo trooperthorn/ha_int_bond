@@ -24,10 +24,24 @@ Runs alongside or instead of the core `bond` integration under its own domain, `
 | Faults | `/v2/sys/faults` | Problem binary sensor (`faults`, `raise_count` attributes); only created when the bridge supports fault reporting |
 | Clear faults | `PATCH /v2/sys/faults` | Config button on the bridge; clears faults that need a manual clear |
 | Pair / Unpair / Unpair from all appliances | `Pair`, `Unpair`, `UnpairSelf` | Config buttons, disabled by default, on devices that expose those actions. Without `Unpair`, `Pair` toggles |
+| Groups | `/v2/groups` | Each group with a single member type becomes an entity of that type (cover, fan, light, fireplace, switch) on its own device; actions go out as one group request |
+| Scenes | `/v2/scenes` | One scene entity per bridge scene (`PUT /v2/scenes/{id}/run`) |
+| Restart | `PUT /v2/sys/reboot` | Restart button on the bridge |
+| Identify | `/v2/sys/indicate` | Identify button (10 s animation); Mate Pro only, created when supported |
+| Power | `/v2/sys/power` | DC voltage/current/power and board/CPU temperature sensors, only for readings the unit reports (v4.37.12+) |
+| Broadcast state updates | `/v2/api/bpup` | Config switch, disabled by default |
+| Shade tilt | `SetTiltPosition`, `ToggleTilt` | Tilt position on the cover (scaled over `min_tilt`..`max_tilt`) and a toggle button |
+| Upper / Lower rail | top-down/bottom-up rail actions | Extra cover entities per rail |
+| Sheer / Blackout | `SetSheerPosition`, `SetBlackoutPosition` | Extra cover entities per layer |
+| Raise/Lower-only shades | `Raise`/`Lower`, `Retract`/`Extend` | Used for open/close when the shade has no `Open`/`Close` |
+| Heat | `SetHeat`, `IncreaseHeat`, `DecreaseHeat`, `HeatPresetNext`/`Prev` | Heat number (0 turns off) and step/preset buttons |
 
 ### New actions (services)
 - `bond_pro.rf_scan` — returns the bridge's RF noise scan (`freq_khz`/`rssi` pairs across all supported bands) as response data. Useful for diagnosing flaky RF devices.
 - `bond_pro.transmit_command` — transmits a stored command's raw RF signal directly.
+- `bond_pro.list_skeds`, `create_sked`, `update_sked`, `delete_sked` — manage the bridge's own schedules for a device, group, scene or channel (`mark` + `seconds` offset + `days_of_week`). `list_skeds` and `create_sked` return response data.
+- `bond_pro.reload_device` — rebuilds a templated device's default command table (overwrites command customisations).
+- `bond_pro.channel_action` — runs an action on a Mate Pro / Sidekick Blue channel.
 - The core tracked-state services (`set_fan_speed_tracked_state`, `set_switch_power_tracked_state`, `set_light_power_tracked_state`, `set_light_brightness_tracked_state`) are kept as-is. The deprecated light services (`start_increasing_brightness`, `start_decreasing_brightness`, `stop`) are dropped — the equivalent buttons remain.
 
 ### Modernization
@@ -70,30 +84,12 @@ The test suite (22 tests) runs on Linux and native Windows; `tests/conftest.py` 
 
 See [docs/README.md](docs/README.md) for protocol- and wire-level facts behind the code.
 
-## Deferred features
-
-Documented in the [Bond Local API](https://docs-local.appbond.com/) but deliberately not implemented yet. The same list is in `DEFERRED_FEATURES` in `const.py` and under `deferred_features` in diagnostics.
-
-| Feature | API |
-| --- | --- |
-| Groups | `/v2/groups` (library calls exist, no platform) |
-| Scenes | `/v2/scenes`, `PUT /v2/scenes/{id}/run` |
-| Schedules | `/v2/{devices,groups,scenes}/{id}/skeds` |
-| Reboot button | `PUT /v2/sys/reboot` (library call exists) |
-| Identify button | `/v2/sys/indicate` |
-| Power / vitals diagnostics | `/v2/sys/power`, `/v2/sys/vitals` (Mate Pro, v4.28+) |
-| Ethernet diagnostics | `/v2/sys/eth` |
-| Device reload | `PUT /v2/devices/{id}/reload` |
-| Channels | `/v2/channels` (Mate) |
-| BPUP broadcast option | `PATCH /v2/api/bpup` |
-| Shade tilt | `ToggleTilt`, `SetTiltPosition` |
-| Top-down/bottom-up shades | upper/lower rail actions |
-| Sheer/blackout shades | `SetSheerPosition`, `SetBlackoutPosition` |
-| Raise/Lower-only shades | `Raise`, `Lower`, `Retract`, `Extend` |
-| Heat | `SetHeat`, `IncreaseHeat`, `DecreaseHeat`, `HeatPresetNext`/`Prev` |
-
 ## Known limitations
 
+- Groups spanning several Bond bridges (sharded groups) are shown per bridge; the shards are not merged.
+- Whether a subscribed BPUP client receives group and `sys/*` pushes is undocumented; group state and bridge telemetry fall back to polling.
+- Mixed-type groups get no entity. Group state cannot take tracked-state (belief) updates.
+- Vitals, Ethernet and channel listings are in diagnostics only.
 - Devices added to the bridge after setup appear after a reload of the config entry.
 - The firmware **update entity** is not implemented yet: `/v2/sys/upgrade` reports upgrade *status* but the availability check goes through Bond's cloud; needs further protocol work.
 - Sidekick remote **event entities** are planned; the library fork already exposes `/v2/sidekicks`.

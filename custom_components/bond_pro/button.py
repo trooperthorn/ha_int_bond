@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
+from homeassistant.components.button import (
+    ButtonDeviceClass,
+    ButtonEntity,
+    ButtonEntityDescription,
+)
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -226,6 +230,39 @@ BUTTONS: tuple[BondButtonEntityDescription, ...] = (
     ),
 )
 
+BUTTONS += (
+    BondButtonEntityDescription(
+        key=Action.INCREASE_HEAT,
+        translation_key="increase_heat",
+        mutually_exclusive=None,
+        argument=STEP_SIZE,
+    ),
+    BondButtonEntityDescription(
+        key=Action.DECREASE_HEAT,
+        translation_key="decrease_heat",
+        mutually_exclusive=None,
+        argument=STEP_SIZE,
+    ),
+    BondButtonEntityDescription(
+        key=Action.HEAT_PRESET_NEXT,
+        translation_key="heat_preset_next",
+        mutually_exclusive=None,
+        argument=None,
+    ),
+    BondButtonEntityDescription(
+        key=Action.HEAT_PRESET_PREV,
+        translation_key="heat_preset_prev",
+        mutually_exclusive=None,
+        argument=None,
+    ),
+    BondButtonEntityDescription(
+        key=Action.TOGGLE_TILT,
+        translation_key="toggle_tilt",
+        mutually_exclusive=None,
+        argument=None,
+    ),
+)
+
 PRESET_BUTTON = BondButtonEntityDescription(
     key=Action.PRESET,
     translation_key="preset",
@@ -273,7 +310,7 @@ async def async_setup_entry(
     data = entry.runtime_data
     entities: list[ButtonEntity] = []
 
-    for device in data.hub.devices:
+    for device in data.hub.entity_sources:
         device_entities = [
             BondButtonEntity(data, device, description)
             for description in BUTTONS
@@ -291,12 +328,15 @@ async def async_setup_entry(
         device_entities.extend(
             BondButtonEntity(data, device, description)
             for description in PAIRING_BUTTONS
-            if device.has_action(description.key)
+            if not device.is_group and device.has_action(description.key)
         )
         entities.extend(device_entities)
 
     if data.telemetry.supports_faults:
         entities.append(BondClearFaultsButton(data))
+    entities.append(BondRebootButton(data))
+    if data.telemetry.supports("indicate"):
+        entities.append(BondIdentifyButton(data))
 
     async_add_entities(entities)
 
@@ -346,3 +386,37 @@ class BondClearFaultsButton(BondHubEntity, ButtonEntity):
         """Send the clear; the bridge applies it asynchronously."""
         await self._bond.clear_faults()
         await self.coordinator.async_request_refresh()
+
+
+class BondRebootButton(BondHubEntity, ButtonEntity):
+    """Restart the bridge (PUT /v2/sys/reboot)."""
+
+    _attr_device_class = ButtonDeviceClass.RESTART
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, data: BondData) -> None:
+        """Initialize the button."""
+        super().__init__(data, "reboot")
+
+    async def async_press(self) -> None:
+        """Reboot the bridge; BPUP and polling recover on their own."""
+        await self._bond.reboot()
+
+
+# Seconds of identify animation per press (the bridge allows 0-30).
+IDENTIFY_SECONDS = 10
+
+
+class BondIdentifyButton(BondHubEntity, ButtonEntity):
+    """Play the identify animation (PATCH /v2/sys/indicate, MT-1500)."""
+
+    _attr_device_class = ButtonDeviceClass.IDENTIFY
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, data: BondData) -> None:
+        """Initialize the button."""
+        super().__init__(data, "identify")
+
+    async def async_press(self) -> None:
+        """Start the animation."""
+        await self._bond.set_indicate(IDENTIFY_SECONDS)
