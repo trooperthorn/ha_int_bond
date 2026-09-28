@@ -8,12 +8,17 @@ from typing import Any
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
     UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
@@ -32,6 +37,54 @@ PARALLEL_UPDATES = 0
 UPTIME_DEVIATION = timedelta(seconds=30)
 
 
+# /v2/sys/power readings (v4.37.12+).  Every key is always present but null
+# when the unit does not measure it, so only non-null keys get an entity.
+# Temperatures are milli-degrees C and DC values milli-units; the DC and
+# temperature readings are never pushed, so they come from telemetry polling.
+POWER_SENSORS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="dc_mV",
+        translation_key="dc_voltage",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.MILLIVOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="dc_mA",
+        translation_key="dc_current",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="dc_W",
+        translation_key="dc_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="pcb_mC",
+        translation_key="pcb_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="cpu_mC",
+        translation_key="cpu_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: BondConfigEntry,
@@ -45,6 +98,12 @@ async def async_setup_entry(
         BondWifiRssiSensor(data),
         BondLastRestartSensor(data),
     ]
+    power = (data.telemetry.data or {}).get("power") or {}
+    entities.extend(
+        BondPowerSensor(data, description)
+        for description in POWER_SENSORS
+        if power.get(description.key) is not None
+    )
     entities.extend(
         BondRfFrequencySensor(data, device)
         for device in hub.devices
@@ -132,3 +191,23 @@ class BondRfFrequencySensor(SensorEntity):
             for key in ("bps", "zero_gap", "addr")
             if key in device.props
         }
+
+
+class BondPowerSensor(BondHubEntity, SensorEntity):
+    """A /v2/sys/power reading of the bridge."""
+
+    def __init__(self, data: BondData, description: SensorEntityDescription) -> None:
+        """Initialize the sensor."""
+        self.entity_description = description
+        super().__init__(data, f"power_{description.key.lower()}")
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the reading, converting milli-degrees to degrees."""
+        power = (self.coordinator.data or {}).get("power") or {}
+        value = power.get(self.entity_description.key)
+        if value is None:
+            return None
+        if self.entity_description.key.endswith("_mC"):
+            return value / 1000
+        return value

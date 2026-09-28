@@ -40,7 +40,7 @@ async def async_setup_entry(
 
     fan_lights: list[Entity] = [
         BondLight(data, device, "light")
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_fan(device.type)
         and device.supports_light()
         and not (device.supports_up_light() and device.supports_down_light())
@@ -48,31 +48,31 @@ async def async_setup_entry(
 
     fan_up_lights: list[Entity] = [
         BondUpLight(data, device, "up_light")
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_fan(device.type) and device.supports_up_light()
     ]
 
     fan_down_lights: list[Entity] = [
         BondDownLight(data, device, "down_light")
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_fan(device.type) and device.supports_down_light()
     ]
 
     fireplaces: list[Entity] = [
         BondFireplace(data, device)
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_fireplace(device.type)
     ]
 
     fp_lights: list[Entity] = [
         BondLight(data, device, "light")
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_fireplace(device.type) and device.supports_light()
     ]
 
     lights: list[Entity] = [
         BondLight(data, device)
-        for device in hub.devices
+        for device in hub.entity_sources
         if DeviceType.is_light(device.type)
     ]
 

@@ -9,7 +9,6 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from . import BondConfigEntry
-from .const import DEFERRED_FEATURES
 
 TO_REDACT = {"access_token", "addr", "ssid", "bssid", "mac", "ip", "gw", "dns"}
 
@@ -29,6 +28,18 @@ async def async_get_config_entry_diagnostics(
     except (ClientError, TimeoutError, OSError):
         pass
 
+    # Product-specific endpoints; each answers 404 where unsupported.
+    extra: dict[str, Any] = {}
+    for key, fetch in (
+        ("eth", hub.bond.eth),
+        ("vitals", hub.bond.vitals),
+        ("channels", hub.bond.channels),
+    ):
+        try:
+            extra[key] = await fetch()
+        except (ClientError, TimeoutError, OSError):
+            extra[key] = None
+
     return {
         "entry": {
             "title": entry.title,
@@ -40,8 +51,21 @@ async def async_get_config_entry_diagnostics(
             "wifi": async_redact_data(wifi, TO_REDACT),
             "rf_scan": rf_scan,
             "faults": (data.telemetry.data or {}).get("faults"),
+            "power": (data.telemetry.data or {}).get("power"),
+            "bpup_config": (data.telemetry.data or {}).get("bpup"),
+            "eth": async_redact_data(extra["eth"] or {}, TO_REDACT),
+            "vitals": extra["vitals"],
+            "channels": extra["channels"],
         },
-        "deferred_features": sorted(DEFERRED_FEATURES),
+        "groups": [
+            {
+                "group_id": group.device_id,
+                "attrs": group.attrs,
+                "state": group.state,
+            }
+            for group in hub.groups
+        ],
+        "scenes": hub.scenes,
         "bpup": {
             "alive": data.bpup_subs.alive,
         },

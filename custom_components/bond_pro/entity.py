@@ -84,7 +84,7 @@ class BondEntity(CoordinatorEntity[BondFallbackCoordinator]):
         super().__init__(data.fallback)
         hub = data.hub
         self._hub = hub
-        self._bond = hub.bond
+        self._bond = device.api(hub.bond)
         self._device = device
         self._device_id = device.device_id
         self._bpup_subs = data.bpup_subs
@@ -155,7 +155,7 @@ class BondEntity(CoordinatorEntity[BondFallbackCoordinator]):
     def _async_bpup_callback(self, json_msg: dict) -> None:
         """Process a state change from BPUP."""
         topic = json_msg["t"]
-        if topic != f"devices/{self._device_id}/state":
+        if topic != self._device.topic:
             return
 
         self._async_state_callback(json_msg["b"])

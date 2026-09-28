@@ -70,3 +70,148 @@ transmit_command:
       required: true
       selector:
         text:
+
+reload_device:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    device_id:
+      required: true
+      selector:
+        text:
+
+list_skeds:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    target_type:
+      required: true
+      selector:
+        select:
+          options: [device, group, scene, channel]
+    target_id:
+      required: true
+      selector:
+        text:
+
+create_sked:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    target_type:
+      required: true
+      selector:
+        select:
+          options: [device, group, scene, channel]
+    target_id:
+      required: true
+      selector:
+        text:
+    enabled:
+      selector:
+        boolean:
+    action:
+      selector:
+        text:
+    argument:
+      selector:
+        object:
+    seconds:
+      selector:
+        number:
+          min: -86400
+          max: 86400
+          unit_of_measurement: s
+    days_of_week:
+      selector:
+        object:
+    mark:
+      selector:
+        select:
+          options: [midnight, sunrise, sunset, dawn, dusk]
+
+update_sked:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    target_type:
+      required: true
+      selector:
+        select:
+          options: [device, group, scene, channel]
+    target_id:
+      required: true
+      selector:
+        text:
+    sked_id:
+      required: true
+      selector:
+        text:
+    enabled:
+      selector:
+        boolean:
+    action:
+      selector:
+        text:
+    argument:
+      selector:
+        object:
+    seconds:
+      selector:
+        number:
+          min: -86400
+          max: 86400
+          unit_of_measurement: s
+    days_of_week:
+      selector:
+        object:
+    mark:
+      selector:
+        select:
+          options: [midnight, sunrise, sunset, dawn, dusk]
+
+delete_sked:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    target_type:
+      required: true
+      selector:
+        select:
+          options: [device, group, scene, channel]
+    target_id:
+      required: true
+      selector:
+        text:
+    sked_id:
+      required: true
+      selector:
+        text:
+
+channel_action:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: bond_pro
+    channel_id:
+      required: true
+      selector:
+        text:
+    action:
+      required: true
+      selector:
+        text:
+    argument:
+      selector:
+        object:

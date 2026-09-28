@@ -13,6 +13,7 @@ Two coordinators replace the upstream integration's per-entity timers:
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 
@@ -63,10 +64,13 @@ class BondFallbackCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
 
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
         """Fetch state for all devices with limited concurrency."""
-        devices = self.hub.devices
+        devices = self.hub.entity_sources
         results = await gather_with_limited_concurrency(
             MAX_REQUESTS,
-            *(self.hub.bond.device_state(device.device_id) for device in devices),
+            *(
+                device.api(self.hub.bond).device_state(device.device_id)
+                for device in devices
+            ),
             return_exceptions=True,
         )
         data: dict[str, dict[str, Any]] = {}
@@ -105,7 +109,8 @@ class BondTelemetryCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Poll bridge telemetry that is never pushed.
 
     Payload keys: "wifi" (sys/wifi/sta), "version" (sys/version),
-    "bridge" (bridge info, including bluelight) and "faults" (sys/faults).
+    "bridge" (bridge info, including bluelight), "faults" (sys/faults),
+    "power" (sys/power), "indicate" (sys/indicate) and "bpup" (api/bpup).
     Missing keys mean the bridge does not support that endpoint (e.g. Smart
     by Bond devices have no /v2/bridge; products without fault reporting
     return 404 for /v2/sys/faults).
@@ -128,8 +133,23 @@ class BondTelemetryCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.bond = bond
         self.hub = hub
-        # Cleared on the first 404 so unsupported bridges are not re-asked.
-        self.supports_faults = True
+        # Optional endpoints, keyed by payload key.  A key is dropped on its
+        # first 404 so products without that endpoint are not re-asked.
+        self._optional: dict[str, Callable[[], Awaitable[dict]]] = {
+            "faults": bond.faults,
+            "power": bond.power,
+            "indicate": bond.indicate,
+            "bpup": bond.bpup_config,
+        }
+
+    def supports(self, key: str) -> bool:
+        """Return True while the bridge answers the optional endpoint."""
+        return key in self._optional
+
+    @property
+    def supports_faults(self) -> bool:
+        """Return True if the bridge reports controller faults."""
+        return self.supports("faults")
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch bridge telemetry."""
@@ -139,13 +159,13 @@ class BondTelemetryCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["wifi"] = await self.bond.wifi_sta()
             if self.hub.is_bridge:
                 data["bridge"] = await self.bond.bridge()
-            if self.supports_faults:
+            for key, fetch in list(self._optional.items()):
                 try:
-                    data["faults"] = await self.bond.faults()
+                    data[key] = await fetch()
                 except ClientResponseError as err:
                     if err.status != HTTPStatus.NOT_FOUND:
                         raise
-                    self.supports_faults = False
+                    del self._optional[key]
         except (ClientError, TimeoutError, OSError) as err:
             raise UpdateFailed(f"Unable to fetch bridge telemetry: {err}") from err
         return data

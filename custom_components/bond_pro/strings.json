@@ -80,7 +80,12 @@
       "pair": { "name": "Pair" },
       "unpair": { "name": "Unpair" },
       "unpair_self": { "name": "Unpair from all appliances" },
-      "clear_faults": { "name": "Clear faults" }
+      "clear_faults": { "name": "Clear faults" },
+      "increase_heat": { "name": "Increase heat" },
+      "decrease_heat": { "name": "Decrease heat" },
+      "heat_preset_next": { "name": "Next heat preset" },
+      "heat_preset_prev": { "name": "Previous heat preset" },
+      "toggle_tilt": { "name": "Toggle tilt" }
     },
     "binary_sensor": {
       "faults": { "name": "Faults" }
@@ -92,12 +97,27 @@
       "blue_light": { "name": "Blue light" }
     },
     "number": {
-      "flame": { "name": "Flame" }
+      "flame": { "name": "Flame" },
+      "heat": { "name": "Heat" }
     },
     "sensor": {
       "wifi_rssi": { "name": "Wi-Fi signal" },
       "last_restart": { "name": "Last restart" },
-      "rf_frequency": { "name": "RF frequency" }
+      "rf_frequency": { "name": "RF frequency" },
+      "dc_voltage": { "name": "DC voltage" },
+      "dc_current": { "name": "DC current" },
+      "dc_power": { "name": "DC power" },
+      "pcb_temperature": { "name": "Board temperature" },
+      "cpu_temperature": { "name": "CPU temperature" }
+    },
+    "cover": {
+      "upper_rail": { "name": "Upper rail" },
+      "lower_rail": { "name": "Lower rail" },
+      "sheer": { "name": "Sheer" },
+      "blackout": { "name": "Blackout" }
+    },
+    "switch": {
+      "bpup_broadcast": { "name": "Broadcast state updates" }
     }
   },
   "services": {
@@ -166,6 +186,170 @@
         "command_id": {
           "name": "Command ID",
           "description": "The stored command to transmit."
+        }
+      }
+    },
+    "reload_device": {
+      "name": "Reload device commands",
+      "description": "Rebuilds a templated device's default commands on the bridge. Overwrites command customisations; state and properties are kept.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "device_id": {
+          "name": "Device ID",
+          "description": "Bond device ID."
+        }
+      }
+    },
+    "list_skeds": {
+      "name": "List schedules",
+      "description": "Returns the bridge schedules of a device, group, scene or channel.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "target_type": {
+          "name": "Target type",
+          "description": "What owns the schedule: device, group, scene or channel."
+        },
+        "target_id": {
+          "name": "Target ID",
+          "description": "Bond ID of the device, group, scene or channel."
+        }
+      }
+    },
+    "create_sked": {
+      "name": "Create schedule",
+      "description": "Creates a bridge schedule and returns its ID.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "target_type": {
+          "name": "Target type",
+          "description": "What owns the schedule: device, group, scene or channel."
+        },
+        "target_id": {
+          "name": "Target ID",
+          "description": "Bond ID of the device, group, scene or channel."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "Whether the schedule runs."
+        },
+        "action": {
+          "name": "Action",
+          "description": "Bond action to run, e.g. SetBrightness. Required except for scene schedules, where it must be omitted."
+        },
+        "argument": {
+          "name": "Argument",
+          "description": "Argument for the action, if it takes one."
+        },
+        "seconds": {
+          "name": "Seconds",
+          "description": "Offset from the mark in seconds; negative runs before it."
+        },
+        "days_of_week": {
+          "name": "Days of week",
+          "description": "Seven booleans starting Sunday. All false runs once, then disables the schedule."
+        },
+        "mark": {
+          "name": "Mark",
+          "description": "Reference time: midnight, sunrise, sunset, dawn or dusk. Solar marks need the bridge's location and time zone set."
+        }
+      }
+    },
+    "update_sked": {
+      "name": "Update schedule",
+      "description": "Changes fields of a bridge schedule.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "target_type": {
+          "name": "Target type",
+          "description": "What owns the schedule: device, group, scene or channel."
+        },
+        "target_id": {
+          "name": "Target ID",
+          "description": "Bond ID of the device, group, scene or channel."
+        },
+        "sked_id": {
+          "name": "Schedule ID",
+          "description": "ID of the schedule, as returned by list or create."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "Whether the schedule runs."
+        },
+        "action": {
+          "name": "Action",
+          "description": "Bond action to run, e.g. SetBrightness. Required except for scene schedules, where it must be omitted."
+        },
+        "argument": {
+          "name": "Argument",
+          "description": "Argument for the action, if it takes one."
+        },
+        "seconds": {
+          "name": "Seconds",
+          "description": "Offset from the mark in seconds; negative runs before it."
+        },
+        "days_of_week": {
+          "name": "Days of week",
+          "description": "Seven booleans starting Sunday. All false runs once, then disables the schedule."
+        },
+        "mark": {
+          "name": "Mark",
+          "description": "Reference time: midnight, sunrise, sunset, dawn or dusk. Solar marks need the bridge's location and time zone set."
+        }
+      }
+    },
+    "delete_sked": {
+      "name": "Delete schedule",
+      "description": "Deletes a bridge schedule.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "target_type": {
+          "name": "Target type",
+          "description": "What owns the schedule: device, group, scene or channel."
+        },
+        "target_id": {
+          "name": "Target ID",
+          "description": "Bond ID of the device, group, scene or channel."
+        },
+        "sked_id": {
+          "name": "Schedule ID",
+          "description": "ID of the schedule, as returned by list or create."
+        }
+      }
+    },
+    "channel_action": {
+      "name": "Run channel action",
+      "description": "Runs an action on a Mate Pro or Sidekick Blue channel.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Bond hub to use; required only when several are configured."
+        },
+        "channel_id": {
+          "name": "Channel ID",
+          "description": "Channel 0-15; 0 is All."
+        },
+        "action": {
+          "name": "Action",
+          "description": "Bond action, e.g. Open."
+        },
+        "argument": {
+          "name": "Argument",
+          "description": "Argument for the action, if it takes one."
         }
       }
     }
