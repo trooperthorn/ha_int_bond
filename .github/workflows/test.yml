@@ -28,7 +28,7 @@ jobs:
       - name: Pin the stable core over the harness
         run: pip install -r requirements_core.txt
       - name: Verify runtime dependency versions
-        run: python -c "from importlib.metadata import version; assert version('homeassistant') == '2026.9.3'"
+        run: python -c "from importlib.metadata import version; assert version('homeassistant') == '2026.9.4'"
       - name: Lint
         run: ruff check custom_components tests scripts
       - name: Run the suite
