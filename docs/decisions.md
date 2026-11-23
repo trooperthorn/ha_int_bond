@@ -36,3 +36,16 @@ The decision step compared the bare manifest version with the tagged name, so ev
 concluded the version was already ahead and never opened a bump PR. The tag prefix is
 stripped before the comparison. Rejected: dropping the `v` prefix from tags, which the
 existing releases already carry.
+
+## 2026-11-23, the test harness is `pytest-homeassistant`
+
+`pytest-homeassistant-custom-component` stopped at 0.13.375, which pins core 2026.10.4, and
+its README points to `pytest-homeassistant`, published from `home-assistant/core`. Core
+2026.11 aliases httpx at import, which the old plugin cannot load under. The suite now
+installs `pytest-homeassistant==2026.11.1`, imports `pytest_homeassistant`, and takes the
+pytest settings from that package's README (`asyncio_default_fixture_loop_scope`,
+`-p no:respx`, `pythonpath`). The wrapper fixture that requested
+`enable_custom_integrations` is gone because `hass` enables custom integrations by default.
+The harness pin, the core pin and the CI version literal name one version and move
+together. Rejected: staying on core 2026.10 until the old harness caught up, which it will
+not.

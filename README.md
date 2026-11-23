@@ -75,12 +75,12 @@ Import from `blueprints/automation/bond_pro/`:
 ## Development
 
 ```bash
-pip install pytest-homeassistant-custom-component==0.13.362
 pip install -r requirements_test.txt
+pip install -r requirements_core.txt
 pytest
 ```
 
-The test suite (22 tests) runs on Linux and native Windows; `tests/conftest.py` documents the Windows socket/event-loop workarounds.
+The test suite (41 tests) runs on Linux; on Windows run it under WSL, because Home Assistant imports `fcntl`. The harness is `pytest-homeassistant`, pinned to the same version as `homeassistant`; see [docs/operations.md](docs/operations.md).
 
 See [docs/README.md](docs/README.md) for protocol- and wire-level facts behind the code.
 

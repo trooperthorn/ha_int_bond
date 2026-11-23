@@ -1,7 +1,7 @@
 """Shared fixtures for Bond Pro tests.
 
-pytest-homeassistant-custom-component provides the `hass` and
-`enable_custom_integrations` fixtures. The repo root is put on sys.path so
+pytest-homeassistant provides the `hass` fixture, which enables custom
+integrations by default. The repo root is put on sys.path so
 `custom_components.bond_pro` imports resolve when pytest runs from anywhere.
 """
 
@@ -11,7 +11,6 @@ import asyncio
 import pathlib
 import sys
 
-import pytest
 import pytest_socket
 
 if sys.platform == "win32":
@@ -22,7 +21,7 @@ if sys.platform == "win32":
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 
-# pytest-homeassistant-custom-component calls pytest_socket.disable_socket()
+# pytest-homeassistant calls pytest_socket.disable_socket()
 # before every test, which blocks creation of every non-unix socket.  Linux
 # asyncio builds its self-pipe from an AF_UNIX socketpair, but Windows has no
 # AF_UNIX -- the event loop itself needs an AF_INET loopback pair, so no
@@ -37,9 +36,3 @@ if sys.platform == "win32":
         )
 
     pytest_socket.disable_socket = _disable_socket_loopback_ok
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
-    """Enable loading custom integrations in all tests."""
-    yield

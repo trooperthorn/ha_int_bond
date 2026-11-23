@@ -9,11 +9,14 @@ scripts`, `pytest tests/ -q`, then `python scripts/build_release_artifacts.py
 --validate-only`.
 
 Pins live in `requirements_test.txt` and `requirements_core.txt`. The Home Assistant test
-harness (`pytest-homeassistant-custom-component`) pins the beta core it was cut from, and
-pip refuses to resolve a different core in the same install, so the stable `homeassistant`
-pin lives in its own file and is installed second. The CI job asserts the installed core
-version so a harness bump that silently moves the core is caught. The harness imports
-`fcntl`, so on Windows the suite runs under WSL.
+harness is `pytest-homeassistant`, published from `home-assistant/core` with the same
+version number as the core release it pins. The harness pin, the `homeassistant` pin and
+the version literal the CI job asserts must all name the same version and move in one
+change; the harness also pins `pytest` and its plugins, so none of those are pinned here.
+The assert stays a literal so a bump that moves only one of the pins fails the job.
+`pytest.ini` carries the settings the harness README asks for, including `-p no:respx`,
+which keeps the respx pytest plugin from importing httpx before core installs its alias.
+Home Assistant imports `fcntl`, so on Windows the suite runs under WSL.
 
 `mypy` is not in the gate yet; see `backlog.md`.
 
